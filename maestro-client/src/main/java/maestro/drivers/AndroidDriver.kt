@@ -61,7 +61,8 @@ import kotlin.io.use
 
 private val logger = LoggerFactory.getLogger(Maestro::class.java)
 
-private const val DefaultDriverHostPort = 7001
+private val DefaultDriverHostPort: Int =
+    System.getProperty("maestro.driver.port")?.toIntOrNull() ?: 7001
 
 class AndroidDriver(
     private val dadb: Dadb,
