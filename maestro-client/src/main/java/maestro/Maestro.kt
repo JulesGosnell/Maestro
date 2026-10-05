@@ -484,6 +484,8 @@ class Maestro(
     }
 
     override fun close() {
+        // smithr: a journey that ends (or dies) offline must still end ONLINE.
+        SmithrNetworkCut.restoreIfOffline()
         driver.close()
     }
 
@@ -642,12 +644,14 @@ class Maestro(
         return driver.isUnicodeInputSupported()
     }
 
+    // smithr: airplane mode IS the lease's per-lease network cut (smithr#974), on
+    // every platform — iOS simulators included, where upstream is a no-op.
     fun isAirplaneModeEnabled(): Boolean {
-        return driver.isAirplaneModeEnabled()
+        return SmithrNetworkCut.offline
     }
 
     fun setAirplaneModeState(enabled: Boolean) {
-        driver.setAirplaneMode(enabled)
+        SmithrNetworkCut.set(enabled)
     }
 
     fun setAndroidChromeDevToolsEnabled(enabled: Boolean) {
