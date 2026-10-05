@@ -104,7 +104,15 @@ class LocalIOSDevice(
         id: String,
         launchArguments: Map<String, Any>,
     ) {
-        deviceController.launch(id, launchArguments)
+        try {
+            deviceController.launch(id, launchArguments)
+        } catch (e: UnsupportedOperationException) {
+            // devicectl cannot launch an app on a physical device; the XCTest runner can
+            xcTestDevice.launch(id, launchArguments)
+        } catch (e: IllegalStateException) {
+            // a controller that reports it cannot launch falls back the same way
+            xcTestDevice.launch(id, launchArguments)
+        }
     }
 
     override fun stop(id: String) {
