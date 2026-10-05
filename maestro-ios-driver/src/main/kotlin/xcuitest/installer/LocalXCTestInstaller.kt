@@ -103,6 +103,19 @@ class LocalXCTestInstaller(
         return metrics.measured("operation", mapOf("command" to "start")) {
             logger.info("start()")
 
+            // smithr physical-iOS: on a physical iPhone the XCTest runner is started outside
+            // Maestro and is already serving on the driver port, so attach to it at once. The
+            // upstream path below reaches the same client for a live runner (startXCTestRunner()
+            // returns early when the channel is alive, then the poll succeeds), but only after a
+            // second status check, and if that check fails it goes on to install and launch a
+            // runner. Checking once, here, closes that window and logs which path a run took.
+            // When nothing answers on the port (a simulator whose runner is not up yet, or a
+            // runner that died), the upstream path below runs unchanged.
+            if (isChannelAlive()) {
+                logger.info("[smithr-patch] XCTest runner already alive — reusing existing client (no xcodebuild restart)")
+                return@measured XCTestClient(host, defaultPort)
+            }
+
             if (useXcodeTestRunner) {
                 logger.info("USE_XCODE_TEST_RUNNER is set. Will wait for XCTest runner to be started manually")
 
