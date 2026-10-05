@@ -64,7 +64,7 @@ class DeviceControlIOSDevice(override val deviceId: String) : IOSDevice {
     }
 
     override fun launch(id: String, launchArguments: Map<String, Any>) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("launch not implemented for devicectl — falls back to XCTest HTTP API")
     }
 
     override fun stop(id: String) {
