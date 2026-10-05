@@ -125,7 +125,14 @@ struct ScreenSizeHelper {
             CGPoint(x: CGFloat(effectiveWidth) - point.y, y: CGFloat(point.x))
         case .landscapeRight:
             CGPoint(x: CGFloat(point.y), y: CGFloat(effectiveHeight) - point.x)
-        default: fatalError("Not implemented yet")
+        // smithr: a handset lying FLAT reports .faceUp/.faceDown, and a
+        // portrait-locked app still reports the PHYSICAL device orientation
+        // here. Upstream's `default:` turns those into fatalError -> SIGTRAP,
+        // killing the XCUITest runner mid-/touch (every tapOn dies with
+        // "Connection reset"). Fall back to portrait, mirroring the
+        // .unknown -> .portrait workaround actualOrientation() already applies
+        // and matching actualScreenSize(), which handles .faceUp/.faceDown.
+        default: point
         }
     }
 }
