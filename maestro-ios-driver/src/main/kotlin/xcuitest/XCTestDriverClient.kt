@@ -32,10 +32,18 @@ class XCTestDriverClient(
     }
 
     fun restartXCTestRunner() {
-        if(reinstallDriver) {
+        // smithr physical-iOS: on a physical iPhone the XCTest runner is started outside
+        // Maestro and is already serving on the driver port; uninstalling it here would
+        // kill that runner. So a runner whose channel is alive is kept, and
+        // installer.start() attaches to it; only a runner that does not answer is
+        // uninstalled and reinstalled, as upstream does. A simulator whose runner is not
+        // up yet takes the upstream path unchanged.
+        if (reinstallDriver && !installer.isChannelAlive()) {
             logger.trace("Restarting XCTest Runner (uninstalling, installing and starting)")
             installer.uninstall()
             logger.trace("XCTest Runner uninstalled, will install and start it")
+        } else if (reinstallDriver) {
+            logger.info("[smithr-patch] XCTest runner already alive — skipping uninstall")
         }
 
         client = installer.start()
