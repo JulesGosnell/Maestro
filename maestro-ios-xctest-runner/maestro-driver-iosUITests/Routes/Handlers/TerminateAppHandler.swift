@@ -12,7 +12,13 @@ struct TerminateAppHandler: HTTPHandler {
         }
         
         NSLog("[Start] Terminating app \(requestBody.appId)")
-        XCUIApplication(bundleIdentifier: requestBody.appId).terminate()
+        do {
+            try catchingObjCException {
+                XCUIApplication(bundleIdentifier: requestBody.appId).terminate()
+            }
+        } catch {
+            return AppError(message: "Terminating app failed. Error: \(error.localizedDescription)").httpResponse
+        }
         NSLog("[End] Terminating app \(requestBody.appId)")
 
         return HTTPResponse(statusCode: .ok)

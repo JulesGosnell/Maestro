@@ -14,11 +14,14 @@ struct TextInputHelper {
         static let slowInputCharactersCount = 1
     }
     
-    static func waitUntilKeyboardIsPresented() async {
+    static func waitUntilKeyboardIsPresented() async throws {
         let deadline = Date().addingTimeInterval(1.0)
         while Date() < deadline {
-            let app = RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
-            if app.keyboards.firstMatch.exists { return }
+            let isKeyboardPresented = try catchingObjCException {
+                let app = RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
+                return app.keyboards.firstMatch.exists
+            }
+            if isKeyboardPresented { return }
             try? await Task.sleep(nanoseconds: 200_000_000)
         }
     }
@@ -28,10 +31,13 @@ struct TextInputHelper {
         // characters after the first on are often skipped, so we'll input it with lower typing frequency
         let firstCharacter = String(text.prefix(Constants.slowInputCharactersCount))
         logger.info("first character: \(firstCharacter)")
-        var eventPath = PointerEventPath.pathForTextInput()
-        eventPath.type(text: firstCharacter, typingSpeed: 1)
-        let eventRecord = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
-        _ = eventRecord.add(eventPath)
+        let eventRecord = try catchingObjCException {
+            var eventPath = PointerEventPath.pathForTextInput()
+            eventPath.type(text: firstCharacter, typingSpeed: 1)
+            let eventRecord = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
+            _ = eventRecord.add(eventPath)
+            return eventRecord
+        }
         try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord)
         
         // wait 500 ms before dispatching next input text request to avoid iOS dropping characters
@@ -40,10 +46,13 @@ struct TextInputHelper {
         if (text.count > Constants.slowInputCharactersCount) {
             let remainingText = String(text.suffix(text.count - Constants.slowInputCharactersCount))
             logger.info("remaining text: \(remainingText)")
-            var eventPath2 = PointerEventPath.pathForTextInput()
-            eventPath2.type(text: remainingText, typingSpeed: Constants.typingFrequency)
-            let eventRecord2 = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
-            _ = eventRecord2.add(eventPath2)
+            let eventRecord2 = try catchingObjCException {
+                var eventPath2 = PointerEventPath.pathForTextInput()
+                eventPath2.type(text: remainingText, typingSpeed: Constants.typingFrequency)
+                let eventRecord2 = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
+                _ = eventRecord2.add(eventPath2)
+                return eventRecord2
+            }
             try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord2)
         }
     }

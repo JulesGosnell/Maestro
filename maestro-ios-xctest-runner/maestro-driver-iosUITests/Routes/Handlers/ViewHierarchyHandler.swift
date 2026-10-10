@@ -20,10 +20,10 @@ struct ViewHierarchyHandler: HTTPHandler {
         }
 
         do {
-            let foregroundApp = RunningApp.getForegroundApp()
+            let foregroundApp = try catchingObjCException { RunningApp.getForegroundApp() }
             guard let foregroundApp = foregroundApp else {
                 NSLog("No foreground app found returning springboard app hierarchy")
-                let springboardHierarchy = try elementHierarchy(xcuiElement: springboardApplication)
+                let springboardHierarchy = try catchingObjCException { try elementHierarchy(xcuiElement: springboardApplication) }
                 let springBoardViewHierarchy = ViewHierarchy.init(axElement: springboardHierarchy, depth: springboardHierarchy.depth())
                 let body = try JSONEncoder().encode(springBoardViewHierarchy)
                 return HTTPResponse(statusCode: .ok, body: body)
@@ -45,9 +45,15 @@ struct ViewHierarchyHandler: HTTPHandler {
     }
 
     func getAppViewHierarchy(foregroundApp: XCUIApplication, excludeKeyboardElements: Bool) async throws -> AXElement {
-        let appHierarchy = try getHierarchyWithFallback(foregroundApp)
-        await SystemPermissionHelper.handleSystemPermissionAlertIfNeeded(appHierarchy: appHierarchy, foregroundApp: foregroundApp)
-                
+        let appHierarchy = try catchingObjCException { try getHierarchyWithFallback(foregroundApp) }
+        try await SystemPermissionHelper.handleSystemPermissionAlertIfNeeded(appHierarchy: appHierarchy, foregroundApp: foregroundApp)
+
+        return try catchingObjCException {
+            try assembleAppViewHierarchy(appHierarchy: appHierarchy)
+        }
+    }
+
+    private func assembleAppViewHierarchy(appHierarchy: AXElement) throws -> AXElement {
         let statusBars = logger.measure(message: "Fetch status bar hierarchy") {
             fullStatusBars(springboardApplication)
         } ?? []

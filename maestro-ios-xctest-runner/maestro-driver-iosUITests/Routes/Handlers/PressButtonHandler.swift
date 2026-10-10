@@ -16,11 +16,17 @@ struct PressButtonHandler: HTTPHandler {
             return AppError(type: .precondition, message: "Incorrect request body for PressButton Handler").httpResponse
         }
         
-        switch requestBody.button {
-        case .home:
-            XCUIDevice.shared.press(.home)
-        case .lock:
-            XCUIDevice.shared.perform(NSSelectorFromString("pressLockButton"))
+        do {
+            try catchingObjCException {
+                switch requestBody.button {
+                case .home:
+                    XCUIDevice.shared.press(.home)
+                case .lock:
+                    XCUIDevice.shared.perform(NSSelectorFromString("pressLockButton"))
+                }
+            }
+        } catch {
+            return AppError(message: "Press button failed. Error: \(error.localizedDescription)").httpResponse
         }
         return HTTPResponse(statusCode: .ok)
     }

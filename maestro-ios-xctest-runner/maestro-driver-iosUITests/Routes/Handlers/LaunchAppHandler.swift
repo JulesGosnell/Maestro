@@ -16,7 +16,13 @@ struct LaunchAppHandler: HTTPHandler {
         }
         
         NSLog("[Start] Launching app with bundle ID: \(requestBody.bundleId)")
-        XCUIApplication(bundleIdentifier: requestBody.bundleId).activate()
+        do {
+            try catchingObjCException {
+                XCUIApplication(bundleIdentifier: requestBody.bundleId).activate()
+            }
+        } catch {
+            return AppError(message: "Launching app failed. Error: \(error.localizedDescription)").httpResponse
+        }
         NSLog("[Done] Launching app with bundle ID: \(requestBody.bundleId)")
 
         

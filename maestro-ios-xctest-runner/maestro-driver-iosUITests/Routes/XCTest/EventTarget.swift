@@ -15,7 +15,7 @@ struct EventTarget {
     }
 
     typealias EventBuilder = @convention(block) () -> EventRecord
-    func dispatchEvent(description: String, builder: EventBuilder) async throws {
+    func dispatchEvent(description: String, builder: EventBuilder) throws {
         let selector = NSSelectorFromString("dispatchEventWithDescription:eventBuilder:error:")
         let imp = eventTarget.method(for: selector)
 

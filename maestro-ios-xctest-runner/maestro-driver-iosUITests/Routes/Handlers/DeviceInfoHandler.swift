@@ -13,15 +13,17 @@ struct DeviceInfoHandler: HTTPHandler {
 
     func handleRequest(_ request: HTTPRequest) async throws -> HTTPResponse {
         do {
-            let (width, height, orientation) = try ScreenSizeHelper.actualScreenSize()
-            NSLog("Device orientation is \(String(orientation.rawValue))")
+            let deviceInfo = try catchingObjCException {
+                let (width, height, orientation) = try ScreenSizeHelper.actualScreenSize()
+                NSLog("Device orientation is \(String(orientation.rawValue))")
 
-            let deviceInfo = DeviceInfoResponse(
-                widthPoints: Int(width),
-                heightPoints: Int(height),
-                widthPixels: Int(CGFloat(width) * UIScreen.main.scale),
-                heightPixels: Int(CGFloat(height) * UIScreen.main.scale)
-            )
+                return DeviceInfoResponse(
+                    widthPoints: Int(width),
+                    heightPoints: Int(height),
+                    widthPixels: Int(CGFloat(width) * UIScreen.main.scale),
+                    heightPixels: Int(CGFloat(height) * UIScreen.main.scale)
+                )
+            }
 
             let responseBody = try JSONEncoder().encode(deviceInfo)
             return HTTPResponse(statusCode: .ok, body: responseBody)

@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CC46970000000000000000B1 /* ObjCExceptionCatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A1 /* ObjCExceptionCatcher.h */; };
+		CC46970000000000000000B2 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A2 /* ObjCExceptionCatcher.m */; };
+		CC46970000000000000000B3 /* ObjCException.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A3 /* ObjCException.swift */; };
+		CC46970000000000000000C2 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A2 /* ObjCExceptionCatcher.m */; };
+		CC46970000000000000000C3 /* ObjCException.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A3 /* ObjCException.swift */; };
+		CC46970000000000000000C4 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 522785802A54410D008DBC0A /* AppError.swift */; };
+		CC46970000000000000000C5 /* ObjCExceptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A4 /* ObjCExceptionTests.swift */; };
+		CC46970000000000000000C6 /* FlyingFox in Frameworks */ = {isa = PBXBuildFile; productRef = CC46970000000000000000C7 /* FlyingFox */; };
 		320979632970925500340282 /* InputTextRouteHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320979622970925500340282 /* InputTextRouteHandler.swift */; };
 		32097965297092A800340282 /* InputTextRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32097964297092A800340282 /* InputTextRequest.swift */; };
 		32762AF82965E2A200FB69BD /* SwipeRouteHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32762AF72965E2A200FB69BD /* SwipeRouteHandler.swift */; };
@@ -158,6 +166,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CC46970000000000000000A1 /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptionCatcher.h; sourceTree = "<group>"; };
+		CC46970000000000000000A2 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptionCatcher.m; sourceTree = "<group>"; };
+		CC46970000000000000000A3 /* ObjCException.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjCException.swift; sourceTree = "<group>"; };
+		CC46970000000000000000A4 /* ObjCExceptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjCExceptionTests.swift; sourceTree = "<group>"; };
 		320979622970925500340282 /* InputTextRouteHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputTextRouteHandler.swift; sourceTree = "<group>"; };
 		32097964297092A800340282 /* InputTextRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputTextRequest.swift; sourceTree = "<group>"; };
 		32762AF72965E2A200FB69BD /* SwipeRouteHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeRouteHandler.swift; sourceTree = "<group>"; };
@@ -398,6 +410,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				39F002647AA68C9B8DC39E61 /* Foundation.framework in Frameworks */,
+				CC46970000000000000000C6 /* FlyingFox in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,6 +429,7 @@
 			isa = PBXGroup;
 			children = (
 				69198CA2D2E1AAFBD06FEB38 /* SnapshotParametersTests.swift */,
+				CC46970000000000000000A4 /* ObjCExceptionTests.swift */,
 				566C6ED5A08D754A03395D84 /* maestro-driver-iosTests-Bridging-Header.h */,
 				5D711D048386CB50800447DD /* Info.plist */,
 			);
@@ -624,6 +638,8 @@
 				521C1F0D2D8051890024EE42 /* XCTestDaemonsProxy.h */,
 				521C1F062D8017460024EE42 /* AXClientProxy.m */,
 				521C1F022D8014340024EE42 /* AXClientProxy.h */,
+				CC46970000000000000000A2 /* ObjCExceptionCatcher.m */,
+				CC46970000000000000000A1 /* ObjCExceptionCatcher.h */,
 				52D8FAAE2D6DD4100015FAB3 /* FBConfiguration.h */,
 				52D8FAAF2D6DD4100015FAB3 /* FBConfiguration.m */,
 				52D8FAAA2D6DD3A20015FAB3 /* FBLogger.h */,
@@ -715,6 +731,7 @@
 			children = (
 				94826F4329DB082100795E9B /* SystemPermissionHelper.swift */,
 				522785802A54410D008DBC0A /* AppError.swift */,
+				CC46970000000000000000A3 /* ObjCException.swift */,
 				9468FA7C2AA741F100254AA3 /* TextInputHelper.swift */,
 				9811C9082C49751D00DDACA0 /* ScreenSizeHelper.swift */,
 			);
@@ -805,6 +822,7 @@
 				52D8FAA22D6DD1580015FAB3 /* maestro-driver-iosUITests-Bridging-Header.h in Headers */,
 				52D8FA9F2D6DD0B50015FAB3 /* XCUIApplicationProcess+FBQuiescence.h in Headers */,
 				521C1F032D8014410024EE42 /* AXClientProxy.h in Headers */,
+				CC46970000000000000000B1 /* ObjCExceptionCatcher.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -866,6 +884,9 @@
 				A94E226D52BD4874F051FD7C /* PBXTargetDependency */,
 			);
 			name = "maestro-driver-iosTests";
+			packageProductDependencies = (
+				CC46970000000000000000C7 /* FlyingFox */,
+			);
 			productName = "maestro-driver-iosTests";
 			productReference = EF8504E3A6C0E75E273B4538 /* maestro-driver-iosTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -1007,6 +1028,7 @@
 				521C1F142D86D3900024EE42 /* TerminateAppRequest.swift in Sources */,
 				9407362E2940CA1600A72E99 /* GetRunningAppRequest.swift in Sources */,
 				521C1F072D8017480024EE42 /* AXClientProxy.m in Sources */,
+				CC46970000000000000000B2 /* ObjCExceptionCatcher.m in Sources */,
 				61C0AFED29C88926005D1FC5 /* EraseTextHandler.swift in Sources */,
 				32ECCB262980449200A1A0A0 /* TouchRequest.swift in Sources */,
 				5261117A2DE5E8E7007C356B /* XCAXClient_iOS+FBSnapshotReqParams.m in Sources */,
@@ -1051,6 +1073,7 @@
 				6124329E2A4DA5BB00F5F619 /* AXElement.swift in Sources */,
 				32762AF82965E2A200FB69BD /* SwipeRouteHandler.swift in Sources */,
 				522785812A54410D008DBC0A /* AppError.swift in Sources */,
+				CC46970000000000000000B3 /* ObjCException.swift in Sources */,
 				320979632970925500340282 /* InputTextRouteHandler.swift in Sources */,
 				52E35D432A654F67001D97A8 /* RunningApp.swift in Sources */,
 				9494CBD12982F719009C987C /* ScreenshotHandler.swift in Sources */,
@@ -1089,6 +1112,10 @@
 			files = (
 				D2244FD4EDCE31D1BAFD0549 /* SnapshotParametersTests.swift in Sources */,
 				641B1A7714A4B3E6B7C2A114 /* AXClientProxy.m in Sources */,
+				CC46970000000000000000C2 /* ObjCExceptionCatcher.m in Sources */,
+				CC46970000000000000000C3 /* ObjCException.swift in Sources */,
+				CC46970000000000000000C4 /* AppError.swift in Sources */,
+				CC46970000000000000000C5 /* ObjCExceptionTests.swift in Sources */,
 				C2DB03C0028C821C6F580B2C /* XCAXClient_iOS+FBSnapshotReqParams.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1599,6 +1626,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		CC46970000000000000000C7 /* FlyingFox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 52049C062935E04D00807AA3 /* XCRemoteSwiftPackageReference "FlyingFox" */;
+			productName = FlyingFox;
+		};
 		5279BFD52935ECE20056C609 /* FlyingFox */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 52049C062935E04D00807AA3 /* XCRemoteSwiftPackageReference "FlyingFox" */;

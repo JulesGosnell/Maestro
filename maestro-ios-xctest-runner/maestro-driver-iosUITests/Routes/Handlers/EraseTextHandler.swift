@@ -19,7 +19,7 @@ struct EraseTextHandler: HTTPHandler {
         do {
             let start = Date()
             
-            await TextInputHelper.waitUntilKeyboardIsPresented()
+            try await TextInputHelper.waitUntilKeyboardIsPresented()
 
             let deleteText = String(repeating: XCUIKeyboardKey.delete.rawValue, count: requestBody.charactersToErase)
             

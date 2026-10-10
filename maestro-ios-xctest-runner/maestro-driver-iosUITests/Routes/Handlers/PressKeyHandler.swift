@@ -18,10 +18,13 @@ struct PressKeyHandler: HTTPHandler {
         }
 
         do {
-            var eventPath = PointerEventPath.pathForTextInput()
-            eventPath.type(text: requestBody.xctestKey, typingSpeed: typingFrequency)
-            let eventRecord = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
-            _ = eventRecord.add(eventPath)
+            let eventRecord = try catchingObjCException {
+                var eventPath = PointerEventPath.pathForTextInput()
+                eventPath.type(text: requestBody.xctestKey, typingSpeed: typingFrequency)
+                let eventRecord = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
+                _ = eventRecord.add(eventPath)
+                return eventRecord
+            }
             try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord)
 
             return HTTPResponse(statusCode: .ok)

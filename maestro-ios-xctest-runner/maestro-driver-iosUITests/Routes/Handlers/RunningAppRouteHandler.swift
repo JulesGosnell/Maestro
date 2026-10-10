@@ -17,10 +17,12 @@ struct RunningAppRouteHandler: HTTPHandler {
         }
         
         do {
-            let runningAppId = requestBody.appIds.first { appId in
-                let app = XCUIApplication(bundleIdentifier: appId)
-                
-                return app.state == .runningForeground
+            let runningAppId = try catchingObjCException {
+                requestBody.appIds.first { appId in
+                    let app = XCUIApplication(bundleIdentifier: appId)
+                    
+                    return app.state == .runningForeground
+                }
             }
             
             let response = ["runningAppBundleId": runningAppId ?? RunningAppRouteHandler.springboardBundleId]

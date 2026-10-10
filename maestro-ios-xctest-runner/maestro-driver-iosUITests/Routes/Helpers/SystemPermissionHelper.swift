@@ -6,14 +6,14 @@ final class SystemPermissionHelper {
 
     private static let buttonFinder = PermissionButtonFinder()
 
-    static func handleSystemPermissionAlertIfNeeded(appHierarchy: AXElement, foregroundApp: XCUIApplication) async {
+    static func handleSystemPermissionAlertIfNeeded(appHierarchy: AXElement, foregroundApp: XCUIApplication) async throws {
         guard let data = UserDefaults.standard.object(forKey: "permissions") as? Data,
               let permissions = try? JSONDecoder().decode([String : PermissionValue].self, from: data),
               let notificationsPermission = permissions.first(where: { $0.key == "notifications" }) else {
             return
         }
 
-        if foregroundApp.bundleID != "com.apple.springboard" {
+        if try catchingObjCException({ foregroundApp.bundleID }) != "com.apple.springboard" {
             NSLog("Foreground app is not springboard skipping auto tapping on permissions")
             return
         }
@@ -44,20 +44,22 @@ final class SystemPermissionHelper {
 
         NSLog("Tapping at coordinates: (\(x), \(y))")
 
-        let (width, height) = ScreenSizeHelper.physicalScreenSize()
-        let point = ScreenSizeHelper.orientationAwarePoint(
-            width: width,
-            height: height,
-            point: CGPoint(x: CGFloat(x), y: CGFloat(y))
-        )
-
-        let eventRecord = EventRecord(orientation: .portrait)
-        _ = eventRecord.addPointerTouchEvent(
-            at: point,
-            touchUpAfter: nil
-        )
-
         do {
+            let eventRecord = try catchingObjCException {
+                let (width, height) = ScreenSizeHelper.physicalScreenSize()
+                let point = ScreenSizeHelper.orientationAwarePoint(
+                    width: width,
+                    height: height,
+                    point: CGPoint(x: CGFloat(x), y: CGFloat(y))
+                )
+
+                let eventRecord = EventRecord(orientation: .portrait)
+                _ = eventRecord.addPointerTouchEvent(
+                    at: point,
+                    touchUpAfter: nil
+                )
+                return eventRecord
+            }
             try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord)
         } catch {
             NSLog("Error tapping permission button: \(error)")

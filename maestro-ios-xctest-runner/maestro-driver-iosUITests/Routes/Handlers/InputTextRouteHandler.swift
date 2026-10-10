@@ -17,7 +17,7 @@ struct InputTextRouteHandler : HTTPHandler {
         do {
             let start = Date()
             
-            await TextInputHelper.waitUntilKeyboardIsPresented()
+            try await TextInputHelper.waitUntilKeyboardIsPresented()
             
             try await TextInputHelper.inputText(requestBody.text)
 

@@ -10,6 +10,7 @@
 
 // Utilities
 #import "AXClientProxy.h"
+#import "ObjCExceptionCatcher.h"
 #import "XCAccessibilityElement.h"
 
 // Swizzling categories
