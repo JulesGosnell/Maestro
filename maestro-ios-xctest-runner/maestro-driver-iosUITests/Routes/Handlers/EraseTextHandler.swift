@@ -23,7 +23,7 @@ struct EraseTextHandler: HTTPHandler {
 
             let deleteText = String(repeating: XCUIKeyboardKey.delete.rawValue, count: requestBody.charactersToErase)
             
-            try await TextInputHelper.inputText(deleteText)
+            try await TextInputHelper.eraseText(deleteText)
             
             let duration = Date().timeIntervalSince(start)
             logger.info("Erase text duration took \(duration)")

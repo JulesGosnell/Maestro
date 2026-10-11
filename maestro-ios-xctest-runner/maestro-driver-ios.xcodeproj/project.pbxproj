@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CC47330000000000000000B1 /* TextInputSequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC47330000000000000000A1 /* TextInputSequence.swift */; };
+		CC47330000000000000000B2 /* TextInputSequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC47330000000000000000A1 /* TextInputSequence.swift */; };
+		CC47330000000000000000B3 /* TextInputSequenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC47330000000000000000A2 /* TextInputSequenceTests.swift */; };
 		CC46970000000000000000B1 /* ObjCExceptionCatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A1 /* ObjCExceptionCatcher.h */; };
 		CC46970000000000000000B2 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A2 /* ObjCExceptionCatcher.m */; };
 		CC46970000000000000000B3 /* ObjCException.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC46970000000000000000A3 /* ObjCException.swift */; };
@@ -166,6 +169,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CC47330000000000000000A1 /* TextInputSequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputSequence.swift; sourceTree = "<group>"; };
+		CC47330000000000000000A2 /* TextInputSequenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputSequenceTests.swift; sourceTree = "<group>"; };
 		CC46970000000000000000A1 /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptionCatcher.h; sourceTree = "<group>"; };
 		CC46970000000000000000A2 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptionCatcher.m; sourceTree = "<group>"; };
 		CC46970000000000000000A3 /* ObjCException.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjCException.swift; sourceTree = "<group>"; };
@@ -430,6 +435,7 @@
 			children = (
 				69198CA2D2E1AAFBD06FEB38 /* SnapshotParametersTests.swift */,
 				CC46970000000000000000A4 /* ObjCExceptionTests.swift */,
+				CC47330000000000000000A2 /* TextInputSequenceTests.swift */,
 				566C6ED5A08D754A03395D84 /* maestro-driver-iosTests-Bridging-Header.h */,
 				5D711D048386CB50800447DD /* Info.plist */,
 			);
@@ -733,6 +739,7 @@
 				522785802A54410D008DBC0A /* AppError.swift */,
 				CC46970000000000000000A3 /* ObjCException.swift */,
 				9468FA7C2AA741F100254AA3 /* TextInputHelper.swift */,
+				CC47330000000000000000A1 /* TextInputSequence.swift */,
 				9811C9082C49751D00DDACA0 /* ScreenSizeHelper.swift */,
 			);
 			path = Helpers;
@@ -1055,6 +1062,7 @@
 				613E87D7299A64BD00FF8551 /* PointerEventPath.swift in Sources */,
 				9811C9092C49751D00DDACA0 /* ScreenSizeHelper.swift in Sources */,
 				9468FA7D2AA741F100254AA3 /* TextInputHelper.swift in Sources */,
+				CC47330000000000000000B1 /* TextInputSequence.swift in Sources */,
 				61C0AFF729D34FEA005D1FC5 /* EventTarget.swift in Sources */,
 				612DE414298426EF003C2BE0 /* EventRecord.swift in Sources */,
 				32ECCB28298044C200A1A0A0 /* TouchRouteHandler.swift in Sources */,
@@ -1116,6 +1124,8 @@
 				CC46970000000000000000C3 /* ObjCException.swift in Sources */,
 				CC46970000000000000000C4 /* AppError.swift in Sources */,
 				CC46970000000000000000C5 /* ObjCExceptionTests.swift in Sources */,
+				CC47330000000000000000B2 /* TextInputSequence.swift in Sources */,
+				CC47330000000000000000B3 /* TextInputSequenceTests.swift in Sources */,
 				C2DB03C0028C821C6F580B2C /* XCAXClient_iOS+FBSnapshotReqParams.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

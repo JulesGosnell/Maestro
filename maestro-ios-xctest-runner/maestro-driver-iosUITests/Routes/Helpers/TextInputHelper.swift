@@ -27,33 +27,43 @@ struct TextInputHelper {
     }
 
     static func inputText(_ text: String) async throws {
-        // due to different keyboard input listener events (i.e. autocorrection or hardware keyboard connection)
-        // characters after the first on are often skipped, so we'll input it with lower typing frequency
-        let firstCharacter = String(text.prefix(Constants.slowInputCharactersCount))
-        logger.info("first character: \(firstCharacter)")
+        try await TextInputSequence.type(text, fieldValue: focusedFieldValue, send: typeKeys)
+    }
+
+    /// Erasing keeps a fixed pause after the first delete: a delete in an already empty field
+    /// changes nothing, so there is no landing to wait for.
+    static func eraseText(_ deleteText: String) async throws {
+        try await typeKeys(String(deleteText.prefix(Constants.slowInputCharactersCount)), typingSpeed: 1)
+
+        // wait 500 ms before dispatching next input text request to avoid iOS dropping characters
+        try await Task.sleep(nanoseconds: UInt64(1_000_000_000 * 0.5))
+
+        if (deleteText.count > Constants.slowInputCharactersCount) {
+            try await typeKeys(String(deleteText.dropFirst(Constants.slowInputCharactersCount)), typingSpeed: Constants.typingFrequency)
+        }
+    }
+
+    private static func typeKeys(_ text: String, typingSpeed: Int) async throws {
+        logger.info("typing: \(text)")
         let eventRecord = try catchingObjCException {
             var eventPath = PointerEventPath.pathForTextInput()
-            eventPath.type(text: firstCharacter, typingSpeed: 1)
+            eventPath.type(text: text, typingSpeed: typingSpeed)
             let eventRecord = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
             _ = eventRecord.add(eventPath)
             return eventRecord
         }
         try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord)
-        
-        // wait 500 ms before dispatching next input text request to avoid iOS dropping characters
-        try await Task.sleep(nanoseconds: UInt64(1_000_000_000 * 0.5))
-        
-        if (text.count > Constants.slowInputCharactersCount) {
-            let remainingText = String(text.suffix(text.count - Constants.slowInputCharactersCount))
-            logger.info("remaining text: \(remainingText)")
-            let eventRecord2 = try catchingObjCException {
-                var eventPath2 = PointerEventPath.pathForTextInput()
-                eventPath2.type(text: remainingText, typingSpeed: Constants.typingFrequency)
-                let eventRecord2 = EventRecord(orientation: ScreenSizeHelper.currentInterfaceOrientation())
-                _ = eventRecord2.add(eventPath2)
-                return eventRecord2
-            }
-            try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord2)
+    }
+
+    /// The value of the field holding keyboard focus; nil when no field has it.
+    private static func focusedFieldValue() throws -> String? {
+        try catchingObjCException {
+            let app = RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
+            let focused = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "hasKeyboardFocus == true"))
+                .firstMatch
+            guard let snapshot = try? focused.snapshot() else { return nil }
+            return snapshot.value as? String ?? ""
         }
     }
 }
