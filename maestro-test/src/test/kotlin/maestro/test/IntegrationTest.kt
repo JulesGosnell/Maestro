@@ -2210,6 +2210,45 @@ class IntegrationTest {
     }
 
     @Test
+    fun `Case 139 - Repeat while notVisible exits promptly once the element appears`() {
+        // Given
+        val commands = readCommands("139_repeat_while_exits_promptly")
+        val driver = driver {
+            var counter = 0
+
+            val counterView = element {
+                text = "Value 0"
+                bounds = Bounds(0, 100, 100, 100)
+            }
+
+            element {
+                text = "Button"
+                bounds = Bounds(0, 0, 100, 100)
+                onClick = {
+                    counter++
+                    counterView.text = "Value $counter"
+                }
+            }
+        }
+
+        // When: the production optional lookup (7s), which is what a loop condition used to wait out
+        val startedAt = System.currentTimeMillis()
+        Maestro(driver).use {
+            runBlocking {
+                Orchestra(it, lookupTimeoutMs = 0L, optionalLookupTimeoutMs = 7000L).runFlow(commands)
+            }
+        }
+        val elapsedMs = System.currentTimeMillis() - startedAt
+
+        // Then: three taps, and the check that found "Value 3" did not wait out the 7s optional lookup
+        driver.assertEventCount(
+            Event.Tap(Point(50, 50)),
+            expectedCount = 3
+        )
+        assertThat(elapsedMs).isLessThan(4000L)
+    }
+
+    @Test
     fun `Case 076 - Optional assertion`() {
         // Given
         val commands = readCommands("076_optional_assertion")

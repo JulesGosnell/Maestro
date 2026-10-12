@@ -818,10 +818,13 @@ class Orchestra(
 
         var mutating = false
 
+        // artha: a loop re-checks its condition every pass, so each check looks once (500ms, as
+        // scrollUntilVisible does) instead of waiting out the 7s optional lookup. With 7s, a
+        // `while: notVisible` loop paid 7s at the moment its element appeared.
         val checkCondition: () -> Boolean = {
             command.condition
                 ?.evaluateScripts(jsEngine)
-                ?.let { evaluateCondition(it, commandOptional = command.optional) } != false
+                ?.let { evaluateCondition(it, commandOptional = command.optional, timeoutMs = REPEAT_WHILE_LOOKUP_TIMEOUT_MS) } != false
         }
 
         while (checkCondition() && counter < maxRuns && currentCoroutineContext().isActive) {
@@ -1658,6 +1661,7 @@ class Orchestra(
 
         private const val MAX_ERASE_CHARACTERS = 50
         private const val MAX_RETRIES_ALLOWED = 3
+        private const val REPEAT_WHILE_LOOKUP_TIMEOUT_MS = 500L
         private val logger = LoggerFactory.getLogger(Orchestra::class.java)
     }
 
