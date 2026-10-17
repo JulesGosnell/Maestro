@@ -27,7 +27,10 @@ import maestro.device.DeviceOrientation
 import maestro.Driver
 import maestro.KeyCode
 import maestro.MaestroException
+import maestro.NearSideNodes.toNearSideNode
+import maestro.NearSideNodes.toTreeNode
 import maestro.OnDeviceElementQuery
+import maestro.nearside.NearSideMatcher
 import maestro.Point
 import maestro.ScreenRecording
 import maestro.SwipeDirection
@@ -57,6 +60,13 @@ class FakeDriver : Driver {
 
     // If true, keyboard will remain visible even after hideKeyboard() is called.
     var keyboardRemainsVisible: Boolean = false
+
+    // smithr#1184: resolve selectors "on the device" like a driver advertising NEAR_SIDE_FIND.
+    // -PfakeDriverNearSide=true runs the whole integration suite that way.
+    var nearSide: Boolean = System.getProperty("maestro.fakeDriver.nearSide") == "true"
+
+    var nearSideQueries: Int = 0
+        private set
 
     override fun name(): String {
         return "Fake Device"
@@ -390,7 +400,7 @@ class FakeDriver : Driver {
     }
 
     override fun capabilities(): List<Capability> {
-        return emptyList()
+        return if (nearSide) listOf(Capability.NEAR_SIDE_FIND) else emptyList()
     }
 
     override fun setPermissions(appId: String, permissions: Map<String, String>) {
@@ -416,6 +426,14 @@ class FakeDriver : Driver {
     override fun queryOnDeviceElements(query: OnDeviceElementQuery): List<TreeNode> {
         if (query is OnDeviceElementQuery.Css) {
             return searchCssRecursive(layout, query.css)
+        } else if (query is OnDeviceElementQuery.NearSide && nearSide) {
+            // The layout cannot change during one query, so a single evaluation is the whole wait
+            nearSideQueries++
+            val deviceInfo = deviceInfo()
+            return NearSideMatcher(deviceInfo.widthGrid, deviceInfo.heightGrid)
+                .find(contentDescriptor().toNearSideNode(), query.selector, limit = 10)
+                .matches
+                .map { it.toTreeNode() }
         } else {
             return super.queryOnDeviceElements(query)
         }

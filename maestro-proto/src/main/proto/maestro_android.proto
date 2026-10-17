@@ -27,6 +27,15 @@ service MaestroDriver {
   rpc enableMockLocationProviders(EmptyRequest) returns (EmptyResponse) {}
 
   rpc disableLocationUpdates(EmptyRequest) returns (EmptyResponse) {}
+
+  // Near-side queries (smithr#1184): resolve a selector ON THE DEVICE instead of shipping the
+  // whole hierarchy to the host. A driver without these answers UNIMPLEMENTED, and the host
+  // keeps the full-dump path.
+  rpc capabilities(CapabilitiesRequest) returns (CapabilitiesResponse) {}
+
+  rpc find(FindRequest) returns (FindResponse) {}
+
+  rpc waitUntil(WaitUntilRequest) returns (WaitUntilResponse) {}
 }
 
 message EmptyRequest {}
@@ -113,4 +122,69 @@ message AddMediaResponse { }
 
 message Payload {
   bytes data = 1;
+}
+
+// Near-side queries (smithr#1184)
+
+message CapabilitiesRequest {}
+
+message CapabilitiesResponse {
+  uint32 nearSide = 1;
+  repeated string ops = 2;
+  repeated string selectorFields = 3;
+}
+
+// The expressible subset of a Maestro ElementSelector, with the host's semantics.
+// Regexes are the patterns the host compiled, applied with Maestro's REGEX_OPTIONS.
+message NearSideSelector {
+  optional string textRegex = 1;
+  optional string idRegex = 2;
+  optional bool enabled = 3;
+  optional bool selected = 4;
+  optional bool checked = 5;
+  optional bool focused = 6;
+  optional int32 index = 7;
+  NearSideSelector below = 8;
+  NearSideSelector above = 9;
+  NearSideSelector leftOf = 10;
+  NearSideSelector rightOf = 11;
+}
+
+message FindRequest {
+  NearSideSelector selector = 1;
+  uint32 limit = 2;
+  // The host's DeviceInfo grid, which filterOutOfBounds measures visibility against
+  uint32 screenWidth = 3;
+  uint32 screenHeight = 4;
+}
+
+// One matched node, with the attributes the host would have built for it from the dump
+message NearSideElement {
+  map<string, string> attributes = 1;
+  optional bool clickable = 2;
+  optional bool enabled = 3;
+  optional bool focused = 4;
+  optional bool checked = 5;
+  optional bool selected = 6;
+}
+
+message FindResponse {
+  repeated NearSideElement matches = 1;
+  bool truncated = 2;
+  uint64 deviceMs = 3;
+}
+
+message WaitUntilRequest {
+  FindRequest find = 1;
+  // "visible" | "gone"
+  string condition = 2;
+  uint32 timeoutMs = 3;
+  uint32 pollMs = 4;
+}
+
+message WaitUntilResponse {
+  bool ok = 1;
+  uint64 elapsedMs = 2;
+  // The last evaluation: the matches when ok and the condition is "visible"
+  FindResponse last = 3;
 }

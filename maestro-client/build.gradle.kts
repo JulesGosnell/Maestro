@@ -66,6 +66,7 @@ sourceSets {
 dependencies {
     protobuf(project(":maestro-proto"))
     implementation(project(":maestro-utils"))
+    api(project(":maestro-nearside"))
     implementation(project(":maestro-ios-driver"))
 
     api(libs.graaljs)
@@ -109,6 +110,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.google.truth)
+    testImplementation(libs.mockk)
     testImplementation(libs.square.mock.server)
     testImplementation(libs.junit.jupiter.params)
 }

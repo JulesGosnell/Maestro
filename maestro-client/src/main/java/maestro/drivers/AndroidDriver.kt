@@ -38,6 +38,7 @@ import maestro.android.AndroidLaunchArguments.toAndroidLaunchArguments
 import maestro.android.chromedevtools.AndroidWebViewHierarchyClient
 import maestro.device.DeviceOrientation
 import maestro.device.Platform
+import maestro.nearside.NearSideSelector
 import maestro.utils.BlockingStreamObserver
 import maestro.utils.MaestroTimer
 import maestro.utils.Metrics
@@ -787,9 +788,91 @@ class AndroidDriver(
 
     override fun capabilities(): List<Capability> {
         return metrics.measured("operation", mapOf("command" to "capabilities")) {
-            listOf(
-                Capability.FAST_HIERARCHY
+            listOfNotNull(
+                Capability.FAST_HIERARCHY,
+                // A WebView merged in over Chrome DevTools is invisible to the device
+                Capability.NEAR_SIDE_FIND.takeIf { !chromeDevToolsEnabled && driverHasNearSide() },
             )
+        }
+    }
+
+    // null until the driver has answered: success or UNIMPLEMENTED, never a transient failure
+    private var nearSideAdvertised: Boolean? = null
+
+    private fun driverHasNearSide(): Boolean {
+        nearSideAdvertised?.let { return it }
+        return try {
+            val response = blockingStub.withDeadlineAfter(10, TimeUnit.SECONDS).capabilities(capabilitiesRequest {})
+            (response.nearSide >= 1 && "waitUntil" in response.opsList).also {
+                LOGGER.info("Driver capabilities: nearSide=${response.nearSide} ops=${response.opsList}")
+                nearSideAdvertised = it
+            }
+        } catch (e: StatusRuntimeException) {
+            if (e.status.code == Status.Code.UNIMPLEMENTED) {
+                LOGGER.info("Driver does not implement near-side queries; using the full hierarchy")
+                nearSideAdvertised = false
+            }
+            false
+        }
+    }
+
+    override fun queryOnDeviceElements(query: OnDeviceElementQuery): List<TreeNode> {
+        return when (query) {
+            is OnDeviceElementQuery.NearSide -> nearSideWaitUntilVisible(query)
+            else -> super.queryOnDeviceElements(query)
+        }
+    }
+
+    private fun nearSideWaitUntilVisible(query: OnDeviceElementQuery.NearSide): List<TreeNode> {
+        return metrics.measured("operation", mapOf("command" to "nearSideWaitUntil")) {
+            val deviceInfo = deviceInfo()
+            val response = runDeviceCall("waitUntil") {
+                blockingStub
+                    .withDeadlineAfter(query.waitMs + 120_000, TimeUnit.MILLISECONDS)
+                    .waitUntil(
+                        waitUntilRequest {
+                            find = findRequest {
+                                selector = query.selector.toProto()
+                                limit = NEAR_SIDE_MATCH_LIMIT
+                                screenWidth = deviceInfo.widthGrid
+                                screenHeight = deviceInfo.heightGrid
+                            }
+                            condition = "visible"
+                            timeoutMs = query.waitMs.toInt()
+                        }
+                    )
+            }
+            LOGGER.info(
+                "Near-side waitUntil: ok=${response.ok} elapsedMs=${response.elapsedMs} " +
+                    "matches=${response.last.matchesCount} truncated=${response.last.truncated}"
+            )
+            response.last.matchesList.map { match ->
+                TreeNode(
+                    attributes = match.attributesMap.toMutableMap(),
+                    clickable = if (match.hasClickable()) match.clickable else null,
+                    enabled = if (match.hasEnabled()) match.enabled else null,
+                    focused = if (match.hasFocused()) match.focused else null,
+                    checked = if (match.hasChecked()) match.checked else null,
+                    selected = if (match.hasSelected()) match.selected else null,
+                )
+            }
+        }
+    }
+
+    private fun NearSideSelector.toProto(): MaestroAndroid.NearSideSelector {
+        val selector = this
+        return nearSideSelector {
+            selector.textRegex?.let { textRegex = it }
+            selector.idRegex?.let { idRegex = it }
+            selector.enabled?.let { enabled = it }
+            selector.selected?.let { this.selected = it }
+            selector.checked?.let { checked = it }
+            selector.focused?.let { focused = it }
+            selector.index?.let { index = it }
+            selector.below?.let { below = it.toProto() }
+            selector.above?.let { above = it.toProto() }
+            selector.leftOf?.let { leftOf = it.toProto() }
+            selector.rightOf?.let { rightOf = it.toProto() }
         }
     }
 
@@ -1016,7 +1099,8 @@ class AndroidDriver(
         }
     }
 
-    private fun mapHierarchy(node: Node): TreeNode {
+    // internal for AndroidNodeMappingEquivalenceTest: the device mirrors this (smithr#1184)
+    internal fun mapHierarchy(node: Node): TreeNode {
         val attributes = if (node is Element) {
             val attributesBuilder = mutableMapOf<String, String>()
 
@@ -1315,6 +1399,8 @@ class AndroidDriver(
         private val LOGGER = LoggerFactory.getLogger(AndroidDriver::class.java)
 
         private const val TOAST_CLASS_NAME = "android.widget.Toast"
+        // The host takes the first match; the rest only show that the selector was ambiguous
+        private const val NEAR_SIDE_MATCH_LIMIT = 10
         private const val SCREENSHOT_DIFF_THRESHOLD = 0.005
         private const val CHUNK_SIZE = 1024L * 1024L * 3L
     }

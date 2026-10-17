@@ -31,6 +31,7 @@ dependencies {
     implementation(libs.square.okio)
 
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
     testRuntimeOnly(libs.junit.jupiter.engine)
 
     testImplementation(libs.wiremock.jre8)
@@ -38,4 +39,6 @@ dependencies {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+    // smithr#1184: run FakeDriver as a near-side driver
+    systemProperty("maestro.fakeDriver.nearSide", project.findProperty("fakeDriverNearSide") ?: "false")
 }

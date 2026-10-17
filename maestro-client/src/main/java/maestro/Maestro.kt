@@ -23,6 +23,7 @@ import com.github.romankh3.image.comparison.ImageComparison
 import maestro.UiElement.Companion.toUiElementOrNull
 import maestro.device.DeviceOrientation
 import maestro.drivers.CdpWebDriver
+import maestro.nearside.NearSideSelector
 import maestro.utils.MaestroTimer
 import maestro.utils.ScreenshotUtils
 import maestro.utils.SocketUtils
@@ -421,8 +422,18 @@ class Maestro(
     fun findElementWithTimeout(
         timeoutMs: Long,
         filter: ElementFilter,
-        viewHierarchy: ViewHierarchy? = null
+        viewHierarchy: ViewHierarchy? = null,
+        nearSide: NearSideSelector? = null,
     ): FindElementResult? {
+        if (nearSide != null && viewHierarchy == null) {
+            try {
+                return findElementNearSide(timeoutMs, nearSide)
+            } catch (e: Exception) {
+                nearSideStats.driverErrors++
+                LOGGER.warn("Near-side lookup failed; using the full hierarchy for this lookup", e)
+            }
+        }
+
         var hierarchy = viewHierarchy ?: ViewHierarchy(TreeNode())
         val element = MaestroTimer.withTimeout(timeoutMs) {
             hierarchy = viewHierarchy ?: viewHierarchy()
@@ -437,6 +448,42 @@ class Maestro(
             }
             return FindElementResult(element, hierarchy)
         }
+    }
+
+    /**
+     * Whether lookups can be resolved on the device (smithr#1184): the driver advertises it and
+     * `-Dmaestro.nearSide=off` has not switched it off.
+     */
+    fun isNearSideAvailable(): Boolean {
+        return System.getProperty("maestro.nearSide") != "off"
+            && Capability.NEAR_SIDE_FIND in driver.capabilities()
+    }
+
+    /** Near-side lookups taken, and how long they took; the A/B instrument for smithr#1184. */
+    data class NearSideStats(
+        var lookups: Int = 0,
+        var totalMs: Long = 0,
+        var driverErrors: Int = 0,
+    )
+
+    val nearSideStats = NearSideStats()
+
+    /**
+     * [findElementWithTimeout] resolved on the device. The match has no children, so its
+     * hierarchy is the element alone, as when a lookup is scoped to a parent.
+     */
+    private fun findElementNearSide(timeoutMs: Long, selector: NearSideSelector): FindElementResult? {
+        val startMs = System.currentTimeMillis()
+        val element = driver.queryOnDeviceElements(OnDeviceElementQuery.NearSide(selector, timeoutMs))
+            .firstOrNull()
+            ?.toUiElementOrNull()
+        val ms = System.currentTimeMillis() - startMs
+
+        nearSideStats.lookups++
+        nearSideStats.totalMs += ms
+        LOGGER.info("Near-side lookup: found=${element != null} ms=$ms (${nearSideStats.lookups} lookups, ${nearSideStats.totalMs} ms)")
+
+        return element?.let { FindElementResult(it, ViewHierarchy(it.treeNode)) }
     }
 
     fun findElementsByOnDeviceQuery(

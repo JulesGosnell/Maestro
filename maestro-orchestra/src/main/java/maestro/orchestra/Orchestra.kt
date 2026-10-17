@@ -940,30 +940,23 @@ class Orchestra(
         }
 
         condition.visible?.let {
-            try {
-                findElement(
-                    selector = it,
-                    timeoutMs = adjustedToLatestInteraction(timeoutMs ?: optionalLookupTimeoutMs),
-                    optional = commandOptional,
-                )
-            } catch (_: MaestroException.ElementNotFound) {
+            val found = isElementFoundForCondition(
+                selector = it,
+                timeoutMs = adjustedToLatestInteraction(timeoutMs ?: optionalLookupTimeoutMs),
+                optional = commandOptional,
+            )
+            if (!found) {
                 return false
             }
         }
 
         condition.notVisible?.let {
             val result = MaestroTimer.withTimeout(adjustedToLatestInteraction(timeoutMs ?: optionalLookupTimeoutMs)) {
-                try {
-                    findElement(
-                        selector = it,
-                        timeoutMs = 500L,
-                        optional = commandOptional,
-                    )
-
-                    // If we got to that point, the element is still visible.
+                if (isElementFoundForCondition(selector = it, timeoutMs = 500L, optional = commandOptional)) {
+                    // The element is still visible.
                     // Returning null to keep waiting.
                     null
-                } catch (ignored: MaestroException.ElementNotFound) {
+                } else {
                     // Element was not visible, as we expected
                     true
                 }
@@ -1352,6 +1345,42 @@ class Orchestra(
         )
     }
 
+    /**
+     * A condition's lookup: only whether the element is there matters, never the hierarchy. When
+     * the driver can resolve the selector on the device it does (smithr#1184), and a miss costs
+     * no hierarchy dump for the exception's debug artifacts. Otherwise this is findElement,
+     * unchanged.
+     */
+    private fun isElementFoundForCondition(
+        selector: ElementSelector,
+        timeoutMs: Long,
+        optional: Boolean,
+    ): Boolean {
+        val startMs = System.currentTimeMillis()
+        val nearSide = if (maestro.isNearSideAvailable()) NearSideSelectors.from(selector) else null
+
+        val found = if (nearSide != null) {
+            maestro.findElementWithTimeout(
+                timeoutMs = timeoutMs,
+                filter = buildFilter(selector).filterFunc,
+                nearSide = nearSide,
+            ) != null
+        } else {
+            try {
+                findElement(selector = selector, optional = optional, timeoutMs = timeoutMs)
+                true
+            } catch (_: MaestroException.ElementNotFound) {
+                false
+            }
+        }
+
+        logger.info(
+            "Condition lookup: fastPath=${nearSide != null} found=$found " +
+                "ms=${System.currentTimeMillis() - startMs} selector=${selector.description()}"
+        )
+        return found
+    }
+
     private fun findElementViewHierarchy(
         selector: ElementSelector?,
         timeout: Long
@@ -1380,7 +1409,8 @@ class Orchestra(
         )
     }
 
-    private fun buildFilter(
+    // internal for NearSideEquivalenceTest (smithr#1184)
+    internal fun buildFilter(
         selector: ElementSelector,
     ): FilterWithDescription {
         val basicFilters = mutableListOf<ElementFilter>()
