@@ -825,7 +825,8 @@ class AndroidDriver(
 
     private fun nearSideWaitUntilVisible(query: OnDeviceElementQuery.NearSide): List<TreeNode> {
         return metrics.measured("operation", mapOf("command" to "nearSideWaitUntil")) {
-            val deviceInfo = deviceInfo()
+            // screenWidth/screenHeight left at 0: the device measures against its own size, the
+            // same numbers deviceInfo() would fetch, so a lookup costs one round trip, not two
             val response = runDeviceCall("waitUntil") {
                 blockingStub
                     .withDeadlineAfter(query.waitMs + 120_000, TimeUnit.MILLISECONDS)
@@ -834,8 +835,6 @@ class AndroidDriver(
                             find = findRequest {
                                 selector = query.selector.toProto()
                                 limit = NEAR_SIDE_MATCH_LIMIT
-                                screenWidth = deviceInfo.widthGrid
-                                screenHeight = deviceInfo.heightGrid
                             }
                             condition = "visible"
                             timeoutMs = query.waitMs.toInt()

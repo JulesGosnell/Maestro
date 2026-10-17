@@ -182,12 +182,7 @@ class Service(
         responseObserver: StreamObserver<MaestroAndroid.DeviceInfo>
     ) {
         try {
-            val windowManager = InstrumentationRegistry.getInstrumentation()
-                .context
-                .getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-            val displayMetrics = DisplayMetrics()
-            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+            val displayMetrics = realDisplayMetrics()
 
             responseObserver.onNext(
                 deviceInfo {
@@ -199,6 +194,16 @@ class Service(
         } catch (t: Throwable) {
             responseObserver.onError(t.internalError())
         }
+    }
+
+    private fun realDisplayMetrics(): DisplayMetrics {
+        val windowManager = InstrumentationRegistry.getInstrumentation()
+            .context
+            .getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+        return displayMetrics
     }
 
     override fun viewHierarchy(
@@ -320,7 +325,14 @@ class Service(
         val toastNode = toastAccessibilityListener.getToastAccessibilityNode()
             ?.takeIf { !toastAccessibilityListener.isTimedOut() }
         val root = ViewHierarchy.snapshot(uiDevice, uiAutomation, toastNode)
-        return NearSideMatcher(request.screenWidth, request.screenHeight)
+        // 0 = this device's own size: what deviceInfo reports and the host's grid is on Android,
+        // without a second round trip per lookup
+        val (width, height) = if (request.screenWidth > 0 && request.screenHeight > 0) {
+            request.screenWidth to request.screenHeight
+        } else {
+            realDisplayMetrics().let { it.widthPixels to it.heightPixels }
+        }
+        return NearSideMatcher(width, height)
             .find(root, request.selector.toNearSideSelector(), if (request.limit > 0) request.limit else 10)
     }
 
