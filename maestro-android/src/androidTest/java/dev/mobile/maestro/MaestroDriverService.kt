@@ -55,7 +55,13 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import maestro_android.MaestroAndroid
 import maestro_android.MaestroDriverGrpc
+import maestro.nearside.NearSideMatcher
+import maestro.nearside.NearSideSelector
 import maestro_android.addMediaResponse
+import maestro_android.capabilitiesResponse
+import maestro_android.findResponse
+import maestro_android.nearSideElement
+import maestro_android.waitUntilResponse
 import maestro_android.checkWindowUpdatingResponse
 import maestro_android.deviceInfo
 import maestro_android.emptyResponse
@@ -231,6 +237,124 @@ class Service(
             responseObserver.onCompleted()
         } catch (t: Throwable) {
             responseObserver.onError(t.internalError())
+        }
+    }
+
+    override fun capabilities(
+        request: MaestroAndroid.CapabilitiesRequest,
+        responseObserver: StreamObserver<MaestroAndroid.CapabilitiesResponse>
+    ) {
+        try {
+            responseObserver.onNext(
+                capabilitiesResponse {
+                    nearSide = 1
+                    ops += listOf("find", "waitUntil")
+                    selectorFields += NearSideSelector.SELECTOR_FIELDS
+                }
+            )
+            responseObserver.onCompleted()
+        } catch (t: Throwable) {
+            responseObserver.onError(t.internalError())
+        }
+    }
+
+    override fun find(
+        request: MaestroAndroid.FindRequest,
+        responseObserver: StreamObserver<MaestroAndroid.FindResponse>
+    ) {
+        try {
+            val start = SystemClock.uptimeMillis()
+            val result = nearSideFind(request)
+            responseObserver.onNext(result.toFindResponse(SystemClock.uptimeMillis() - start))
+            responseObserver.onCompleted()
+        } catch (t: Throwable) {
+            responseObserver.onError(t.internalError())
+        }
+    }
+
+    /**
+     * Polls [nearSideFind] on the device until the condition holds or [MaestroAndroid.WaitUntilRequest.getTimeoutMs]
+     * passes, evaluating at least once — the loop the host's MaestroTimer.withTimeout runs over full dumps.
+     */
+    override fun waitUntil(
+        request: MaestroAndroid.WaitUntilRequest,
+        responseObserver: StreamObserver<MaestroAndroid.WaitUntilResponse>
+    ) {
+        try {
+            val start = SystemClock.uptimeMillis()
+            val wantVisible = when (request.condition) {
+                "visible" -> true
+                "gone" -> false
+                else -> throw IllegalArgumentException("Unsupported waitUntil condition: ${request.condition}")
+            }
+
+            var result: NearSideMatcher.Result
+            var ok: Boolean
+            do {
+                result = nearSideFind(request.find)
+                // The host takes the first match and keeps it only if it has bounds
+                val visible = result.matches.firstOrNull()?.attributes?.containsKey("bounds") == true
+                ok = visible == wantVisible
+                if (!ok && request.pollMs > 0) {
+                    SystemClock.sleep(request.pollMs.toLong())
+                }
+            } while (!ok && SystemClock.uptimeMillis() - start < request.timeoutMs)
+
+            val elapsed = SystemClock.uptimeMillis() - start
+            responseObserver.onNext(
+                waitUntilResponse {
+                    this.ok = ok
+                    elapsedMs = elapsed
+                    last = result.toFindResponse(elapsed)
+                }
+            )
+            responseObserver.onCompleted()
+        } catch (t: Throwable) {
+            responseObserver.onError(t.internalError())
+        }
+    }
+
+    /** The near-side counterpart of [viewHierarchy]: the same refresh, the same tree, matched here. */
+    private fun nearSideFind(request: MaestroAndroid.FindRequest): NearSideMatcher.Result {
+        refreshAccessibilityCache()
+        val toastNode = toastAccessibilityListener.getToastAccessibilityNode()
+            ?.takeIf { !toastAccessibilityListener.isTimedOut() }
+        val root = ViewHierarchy.snapshot(uiDevice, uiAutomation, toastNode)
+        return NearSideMatcher(request.screenWidth, request.screenHeight)
+            .find(root, request.selector.toNearSideSelector(), if (request.limit > 0) request.limit else 10)
+    }
+
+    private fun MaestroAndroid.NearSideSelector.toNearSideSelector(): NearSideSelector {
+        return NearSideSelector(
+            textRegex = if (hasTextRegex()) textRegex else null,
+            idRegex = if (hasIdRegex()) idRegex else null,
+            enabled = if (hasEnabled()) enabled else null,
+            selected = if (hasSelected()) selected else null,
+            checked = if (hasChecked()) checked else null,
+            focused = if (hasFocused()) focused else null,
+            index = if (hasIndex()) index else null,
+            below = if (hasBelow()) below.toNearSideSelector() else null,
+            above = if (hasAbove()) above.toNearSideSelector() else null,
+            leftOf = if (hasLeftOf()) leftOf.toNearSideSelector() else null,
+            rightOf = if (hasRightOf()) rightOf.toNearSideSelector() else null,
+        )
+    }
+
+    private fun NearSideMatcher.Result.toFindResponse(deviceMs: Long): MaestroAndroid.FindResponse {
+        val nodes = matches
+        return findResponse {
+            matches += nodes.map { node ->
+                nearSideElement {
+                    attributes.putAll(node.attributes)
+                    node.clickable?.let { clickable = it }
+                    node.enabled?.let { enabled = it }
+                    node.focused?.let { focused = it }
+                    node.checked?.let { checked = it }
+                    node.selected?.let { selected = it }
+                }
+            }
+            truncated = this@toFindResponse.truncated
+            this.deviceMs = deviceMs
         }
     }
 

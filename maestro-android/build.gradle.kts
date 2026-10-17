@@ -146,6 +146,7 @@ sourceSets {
 
 dependencies {
     protobuf(project(":maestro-proto"))
+    androidTestImplementation(project(":maestro-nearside"))
 
     implementation(libs.grpc.kotlin.stub)
     implementation(libs.grpc.netty.shaded)

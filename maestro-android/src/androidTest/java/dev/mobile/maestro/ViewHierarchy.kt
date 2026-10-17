@@ -16,6 +16,8 @@ import android.widget.TableLayout
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import dev.mobile.maestro.AccessibilityNodeInfoExt.getHintOrFallback
+import maestro.nearside.AndroidNodeMapping
+import maestro.nearside.NearSideNode
 import org.xmlpull.v1.XmlSerializer
 import java.io.IOException
 import java.io.OutputStream
@@ -31,18 +33,7 @@ object ViewHierarchy {
         out: OutputStream,
         toastNode: AccessibilityNodeInfo? = null
     ) {
-        val windowManager = InstrumentationRegistry.getInstrumentation()
-            .context
-            .getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        val displayRect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            windowManager.currentWindowMetrics.bounds
-        } else {
-            val displayMetrics = DisplayMetrics()
-            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-            Rect(0, 0, displayMetrics.widthPixels, displayMetrics.heightPixels)
-        }
-
+        val displayRect = displayRect()
 
         val serializer = Xml.newSerializer()
         serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true)
@@ -51,7 +42,54 @@ object ViewHierarchy {
         serializer.startTag("", "hierarchy")
         serializer.attribute("", "rotation", Integer.toString(device.displayRotation))
 
-        val roots = try {
+        windowRoots(device, uiAutomation).forEach {
+            dumpNodeRec(
+                it,
+                serializer,
+                0,
+                displayRect
+            )
+        }
+        addToastNode(toastNode, serializer, displayRect)
+
+        serializer.endTag("", "hierarchy")
+        serializer.endDocument()
+    }
+
+    /**
+     * The tree [dump] would produce, as the host would parse it, without serialising it: the
+     * input to near-side queries (smithr#1184). Walks the same nodes with the same attributes.
+     */
+    fun snapshot(
+        device: UiDevice,
+        uiAutomation: UiAutomation,
+        toastNode: AccessibilityNodeInfo? = null
+    ): NearSideNode {
+        val displayRect = displayRect()
+
+        val children = windowRoots(device, uiAutomation).map {
+            snapshotNodeRec(it, 0, displayRect)
+        } + listOfNotNull(toastNode?.let { AndroidNodeMapping.element(toastAttributes(it, displayRect).toXmlMap(), emptyList()) })
+
+        return AndroidNodeMapping.document(AndroidNodeMapping.hierarchyElement(children))
+    }
+
+    private fun displayRect(): Rect {
+        val windowManager = InstrumentationRegistry.getInstrumentation()
+            .context
+            .getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            windowManager.currentWindowMetrics.bounds
+        } else {
+            val displayMetrics = DisplayMetrics()
+            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+            Rect(0, 0, displayMetrics.widthPixels, displayMetrics.heightPixels)
+        }
+    }
+
+    private fun windowRoots(device: UiDevice, uiAutomation: UiAutomation): List<AccessibilityNodeInfo> {
+        return try {
             device.javaClass
                 .getDeclaredMethod("getWindowRoots")
                 .apply {
@@ -67,19 +105,6 @@ object ViewHierarchy {
             Log.e(LOGTAG, "Unable to call getWindowRoots", e)
             listOf(uiAutomation.rootInActiveWindow)
         }
-
-        roots.forEach {
-            dumpNodeRec(
-                it,
-                serializer,
-                0,
-                displayRect
-            )
-        }
-        addToastNode(toastNode, serializer, displayRect)
-
-        serializer.endTag("", "hierarchy")
-        serializer.endDocument()
     }
 
     private fun addToastNode(
@@ -90,16 +115,26 @@ object ViewHierarchy {
         if (toastNode != null) {
             serializer.apply {
                 startTag("", "node")
-                attribute("", "index", "0")
-                attribute("", "class", toastNode.className.toString())
-                attribute("", "text", toastNode.text.toString())
-                attribute("", "visible-to-user", toastNode.isVisibleToUser.toString())
-                attribute("", "checkable", toastNode.isCheckable.toString())
-                attribute("", "clickable", toastNode.isClickable.toString())
-                attribute("", "bounds", getVisibleBoundsInScreen(toastNode, displayRect)?.toShortString())
+                toastAttributes(toastNode, displayRect).forEach { (name, value) -> attribute("", name, value) }
                 endTag("", "node")
             }
         }
+    }
+
+    private fun toastAttributes(toastNode: AccessibilityNodeInfo, displayRect: Rect): List<Pair<String, String?>> {
+        return listOf(
+            "index" to "0",
+            "class" to toastNode.className.toString(),
+            "text" to toastNode.text.toString(),
+            "visible-to-user" to toastNode.isVisibleToUser.toString(),
+            "checkable" to toastNode.isCheckable.toString(),
+            "clickable" to toastNode.isClickable.toString(),
+            "bounds" to getVisibleBoundsInScreen(toastNode, displayRect)?.toShortString(),
+        )
+    }
+
+    private fun List<Pair<String, String?>>.toXmlMap(): Map<String, String> {
+        return mapNotNull { (name, value) -> value?.let { name to it } }.toMap()
     }
 
     private val NAF_EXCLUDED_CLASSES = arrayOf(
@@ -117,33 +152,75 @@ object ViewHierarchy {
         insideWebView: Boolean = false,
     ) {
         serializer.startTag("", "node")
+        nodeAttributes(node, index, displayRect).forEach { (name, value) ->
+            serializer.attribute("", name, value)
+        }
+        forEachDumpedChild(node, insideWebView) { child, i, childInsideWebView ->
+            dumpNodeRec(
+                child,
+                serializer, i,
+                displayRect,
+                childInsideWebView
+            )
+        }
+        serializer.endTag("", "node")
+    }
+
+    private fun snapshotNodeRec(
+        node: AccessibilityNodeInfo,
+        index: Int,
+        displayRect: Rect,
+        insideWebView: Boolean = false,
+    ): NearSideNode {
+        val attributes = nodeAttributes(node, index, displayRect).toXmlMap()
+        val children = mutableListOf<NearSideNode>()
+        forEachDumpedChild(node, insideWebView) { child, i, childInsideWebView ->
+            children += snapshotNodeRec(child, i, displayRect, childInsideWebView)
+        }
+        return AndroidNodeMapping.element(attributes, children)
+    }
+
+    /** The attributes of one `<node>`, in the order [dump] writes them. */
+    private fun nodeAttributes(
+        node: AccessibilityNodeInfo,
+        index: Int,
+        displayRect: Rect,
+    ): List<Pair<String, String?>> {
+        val attributes = mutableListOf<Pair<String, String?>>()
         if (!nafExcludedClass(node) && !nafCheck(node)) {
-            serializer.attribute("", "NAF", java.lang.Boolean.toString(true))
+            attributes += "NAF" to java.lang.Boolean.toString(true)
         }
 
-        serializer.attribute("", "index", Integer.toString(index))
-        serializer.attribute("", "hintText", safeCharSeqToString(node.getHintOrFallback()))
-        serializer.attribute("", "text", safeCharSeqToString(node.text))
-        serializer.attribute("", "resource-id", safeCharSeqToString(node.viewIdResourceName))
-        serializer.attribute("", "class", safeCharSeqToString(node.className))
-        serializer.attribute("", "package", safeCharSeqToString(node.packageName))
-        serializer.attribute("", "content-desc", safeCharSeqToString(node.contentDescription))
-        serializer.attribute("", "checkable", java.lang.Boolean.toString(node.isCheckable))
-        serializer.attribute("", "checked", java.lang.Boolean.toString(node.isChecked))
-        serializer.attribute("", "clickable", java.lang.Boolean.toString(node.isClickable))
-        serializer.attribute("", "enabled", java.lang.Boolean.toString(node.isEnabled))
-        serializer.attribute("", "focusable", java.lang.Boolean.toString(node.isFocusable))
-        serializer.attribute("", "focused", java.lang.Boolean.toString(node.isFocused))
-        serializer.attribute("", "scrollable", java.lang.Boolean.toString(node.isScrollable))
-        serializer.attribute("", "long-clickable", java.lang.Boolean.toString(node.isLongClickable))
-        serializer.attribute("", "password", java.lang.Boolean.toString(node.isPassword))
-        serializer.attribute("", "selected", java.lang.Boolean.toString(node.isSelected))
-        serializer.attribute("", "visible-to-user", java.lang.Boolean.toString(node.isVisibleToUser))
-        serializer.attribute("", "important-for-accessibility", java.lang.Boolean.toString(node.isImportantForAccessibility))
-        serializer.attribute("", "error", safeCharSeqToString(node.error))
-        serializer.attribute(
-            "", "bounds", getVisibleBoundsInScreen(node, displayRect)?.toShortString()
-        )
+        attributes += "index" to Integer.toString(index)
+        attributes += "hintText" to safeCharSeqToString(node.getHintOrFallback())
+        attributes += "text" to safeCharSeqToString(node.text)
+        attributes += "resource-id" to safeCharSeqToString(node.viewIdResourceName)
+        attributes += "class" to safeCharSeqToString(node.className)
+        attributes += "package" to safeCharSeqToString(node.packageName)
+        attributes += "content-desc" to safeCharSeqToString(node.contentDescription)
+        attributes += "checkable" to java.lang.Boolean.toString(node.isCheckable)
+        attributes += "checked" to java.lang.Boolean.toString(node.isChecked)
+        attributes += "clickable" to java.lang.Boolean.toString(node.isClickable)
+        attributes += "enabled" to java.lang.Boolean.toString(node.isEnabled)
+        attributes += "focusable" to java.lang.Boolean.toString(node.isFocusable)
+        attributes += "focused" to java.lang.Boolean.toString(node.isFocused)
+        attributes += "scrollable" to java.lang.Boolean.toString(node.isScrollable)
+        attributes += "long-clickable" to java.lang.Boolean.toString(node.isLongClickable)
+        attributes += "password" to java.lang.Boolean.toString(node.isPassword)
+        attributes += "selected" to java.lang.Boolean.toString(node.isSelected)
+        attributes += "visible-to-user" to java.lang.Boolean.toString(node.isVisibleToUser)
+        attributes += "important-for-accessibility" to java.lang.Boolean.toString(node.isImportantForAccessibility)
+        attributes += "error" to safeCharSeqToString(node.error)
+        attributes += "bounds" to getVisibleBoundsInScreen(node, displayRect)?.toShortString()
+        return attributes
+    }
+
+    /** The children [dump] descends into, with whether each is inside a WebView. */
+    private fun forEachDumpedChild(
+        node: AccessibilityNodeInfo,
+        insideWebView: Boolean,
+        block: (child: AccessibilityNodeInfo, index: Int, insideWebView: Boolean) -> Unit,
+    ) {
         val count = node.childCount
         for (i in 0 until count) {
             val child = node.getChild(i)
@@ -152,12 +229,7 @@ object ViewHierarchy {
                 // Original implementation has a bug where contents of a WebView sometimes reported as invisible.
                 // This is a workaround for that bug.
                 if (child.isVisibleToUser || insideWebView) {
-                    dumpNodeRec(
-                        child,
-                        serializer, i,
-                        displayRect,
-                        insideWebView || child.className == "android.webkit.WebView"
-                    )
+                    block(child, i, insideWebView || child.className == "android.webkit.WebView")
                     child.recycle()
                 } else {
                     Log.i(LOGTAG, "Skipping invisible child: $child")
@@ -166,7 +238,6 @@ object ViewHierarchy {
                 Log.i(LOGTAG, "Null child $i/$count, parent: $node")
             }
         }
-        serializer.endTag("", "node")
     }
 
     /**
