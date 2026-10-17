@@ -181,6 +181,32 @@ class XCTestDriverClient(
         return installer.isChannelAlive()
     }
 
+    /** smithr#1184: what near-side lookups the runner answers, or null for a runner without them (404). */
+    fun nearSideCapabilities(): NearSideCapabilities? {
+        val request = Request.Builder()
+            .url(client.xctestAPIBuilder("capabilities").build())
+            .get()
+            .build()
+
+        return okHttpClient.newCall(request).execute().use { response ->
+            val body = response.body?.string() ?: ""
+            when {
+                response.isSuccessful -> mapper.readValue(body, NearSideCapabilities::class.java)
+                response.code == 404 -> null
+                else -> {
+                    handleExceptions(response.code, "capabilities", body)
+                    null
+                }
+            }
+        }
+    }
+
+    /** smithr#1184: resolve a selector on the device, polling there until [NearSideWaitUntilRequest.condition] holds. */
+    fun nearSideWaitUntil(request: NearSideWaitUntilRequest): NearSideWaitUntilResponse {
+        val response = executeJsonRequest("waitUntil", request)
+        return mapper.readValue(response, NearSideWaitUntilResponse::class.java)
+    }
+
     fun close() {
         installer.close()
     }

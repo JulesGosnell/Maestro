@@ -4,6 +4,9 @@ import com.github.michaelbull.result.*
 import device.IOSDevice
 import device.IOSScreenRecording
 import xcuitest.api.DeviceInfo
+import xcuitest.api.NearSideCapabilities
+import xcuitest.api.NearSideWaitUntilRequest
+import xcuitest.api.NearSideWaitUntilResponse
 import ios.xctest.XCTestIOSDevice
 import okio.Sink
 import java.io.InputStream
@@ -29,6 +32,14 @@ class LocalIOSDevice(
 
     override fun deviceInfo(): DeviceInfo {
         return xcTestDevice.deviceInfo()
+    }
+
+    override fun nearSideCapabilities(): NearSideCapabilities? {
+        return xcTestDevice.nearSideCapabilities()
+    }
+
+    override fun nearSideWaitUntil(request: NearSideWaitUntilRequest): NearSideWaitUntilResponse {
+        return xcTestDevice.nearSideWaitUntil(request)
     }
 
     override fun viewHierarchy(excludeKeyboardElements: Boolean): ViewHierarchy {

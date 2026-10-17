@@ -22,6 +22,9 @@ package device
 import com.github.michaelbull.result.Result
 import hierarchy.ViewHierarchy
 import xcuitest.api.DeviceInfo
+import xcuitest.api.NearSideCapabilities
+import xcuitest.api.NearSideWaitUntilRequest
+import xcuitest.api.NearSideWaitUntilResponse
 import okio.Sink
 import java.io.InputStream
 
@@ -34,6 +37,14 @@ interface IOSDevice : AutoCloseable {
     fun deviceInfo(): DeviceInfo
 
     fun viewHierarchy(excludeKeyboardElements: Boolean): ViewHierarchy
+
+    /** smithr#1184: the near-side lookups the device answers; null when it answers none. */
+    fun nearSideCapabilities(): NearSideCapabilities? = null
+
+    /** smithr#1184: only called when [nearSideCapabilities] advertised `waitUntil`. */
+    fun nearSideWaitUntil(request: NearSideWaitUntilRequest): NearSideWaitUntilResponse {
+        throw UnsupportedOperationException("near-side lookups are not supported by ${this::class.simpleName}")
+    }
 
     fun tap(x: Int, y: Int)
 

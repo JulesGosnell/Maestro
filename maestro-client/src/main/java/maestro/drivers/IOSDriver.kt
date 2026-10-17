@@ -32,6 +32,7 @@ import maestro.KeyCode
 import maestro.MaestroException
 import maestro.MediaExt
 import maestro.NamedSource
+import maestro.OnDeviceElementQuery
 import maestro.Point
 import maestro.ScreenRecording
 import maestro.SwipeDirection
@@ -48,10 +49,14 @@ import maestro.utils.MetricsProvider
 import maestro.utils.NoopInsights
 import maestro.utils.ScreenshotUtils
 import maestro.utils.TempFileHandler
+import maestro.nearside.NearSideSelector
 import okio.Sink
 import okio.source
 import org.slf4j.LoggerFactory
 import util.XCRunnerCLIUtils
+import xcuitest.api.NearSideFindRequest
+import xcuitest.api.NearSideSelectorRequest
+import xcuitest.api.NearSideWaitUntilRequest
 import java.io.File
 import java.net.SocketTimeoutException
 import kotlin.collections.set
@@ -493,8 +498,79 @@ class IOSDriver(
     }
 
     override fun capabilities(): List<Capability> {
-        return emptyList()
+        return listOfNotNull(
+            Capability.NEAR_SIDE_FIND.takeIf { runnerHasNearSide() },
+        )
     }
+
+    // smithr#1184: null until the runner has answered (capabilities, or a 404 from a runner
+    // without them), never set by a transient failure
+    private var nearSideAdvertised: Boolean? = null
+
+    private fun runnerHasNearSide(): Boolean {
+        nearSideAdvertised?.let { return it }
+        return try {
+            val capabilities = iosDevice.nearSideCapabilities()
+            (capabilities != null && capabilities.nearSide >= 1 && "waitUntil" in capabilities.ops).also {
+                LOGGER.info("XCTest runner near-side capabilities: $capabilities")
+                nearSideAdvertised = it
+            }
+        } catch (e: Exception) {
+            LOGGER.warn("Could not read the XCTest runner's capabilities; using the full hierarchy", e)
+            false
+        }
+    }
+
+    override fun queryOnDeviceElements(query: OnDeviceElementQuery): List<TreeNode> {
+        return when (query) {
+            is OnDeviceElementQuery.NearSide -> nearSideWaitUntilVisible(query)
+            else -> super.queryOnDeviceElements(query)
+        }
+    }
+
+    // One round trip: the runner polls for up to waitMs and answers with the matches, which carry
+    // the attributes mapViewHierarchy would have built for them from the full dump.
+    private fun nearSideWaitUntilVisible(query: OnDeviceElementQuery.NearSide): List<TreeNode> {
+        return metrics.measured("operation", mapOf("command" to "nearSideWaitUntil")) {
+            val response = runDeviceCall("waitUntil") {
+                iosDevice.nearSideWaitUntil(
+                    NearSideWaitUntilRequest(
+                        find = NearSideFindRequest(selector = query.selector.toRequest(), limit = NEAR_SIDE_MATCH_LIMIT),
+                        condition = "visible",
+                        timeoutMs = query.waitMs,
+                    )
+                )
+            }
+            LOGGER.info(
+                "Near-side waitUntil: ok=${response.ok} elapsedMs=${response.elapsedMs} " +
+                    "deviceMs=${response.last.deviceMs} matches=${response.last.matches.size} truncated=${response.last.truncated}"
+            )
+            response.last.matches.map { match ->
+                TreeNode(
+                    attributes = match.attributes.toMutableMap(),
+                    clickable = match.clickable,
+                    enabled = match.enabled,
+                    focused = match.focused,
+                    checked = match.checked,
+                    selected = match.selected,
+                )
+            }
+        }
+    }
+
+    private fun NearSideSelector.toRequest(): NearSideSelectorRequest = NearSideSelectorRequest(
+        textRegex = textRegex,
+        idRegex = idRegex,
+        enabled = enabled,
+        selected = selected,
+        checked = checked,
+        focused = focused,
+        index = index,
+        below = below?.toRequest(),
+        above = above?.toRequest(),
+        leftOf = leftOf?.toRequest(),
+        rightOf = rightOf?.toRequest(),
+    )
 
     override fun setPermissions(appId: String, permissions: Map<String, String>) {
         metrics.measured("operation", mapOf("command" to "setPermissions", "appId" to appId)) {
@@ -579,6 +655,8 @@ class IOSDriver(
 
     companion object {
         const val NAME = "iOS Simulator"
+
+        private const val NEAR_SIDE_MATCH_LIMIT = 10
 
         private val LOGGER = LoggerFactory.getLogger(IOSDevice::class.java)
 

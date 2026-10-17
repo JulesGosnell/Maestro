@@ -6,6 +6,9 @@ import hierarchy.ViewHierarchy
 import ios.IOSDeviceErrors
 import device.IOSScreenRecording
 import xcuitest.api.DeviceInfo
+import xcuitest.api.NearSideCapabilities
+import xcuitest.api.NearSideWaitUntilRequest
+import xcuitest.api.NearSideWaitUntilResponse
 import maestro.utils.DepthTracker
 import maestro.utils.network.XCUITestServerError
 import okio.Sink
@@ -40,6 +43,14 @@ class XCTestIOSDevice(
             DepthTracker.trackDepth(viewHierarchy.depth)
             viewHierarchy
         }
+    }
+
+    override fun nearSideCapabilities(): NearSideCapabilities? {
+        return execute { client.nearSideCapabilities() }
+    }
+
+    override fun nearSideWaitUntil(request: NearSideWaitUntilRequest): NearSideWaitUntilResponse {
+        return execute { client.nearSideWaitUntil(request) }
     }
 
     override fun tap(x: Int, y: Int) {
