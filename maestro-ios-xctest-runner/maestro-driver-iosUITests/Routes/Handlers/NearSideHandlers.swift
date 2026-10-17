@@ -436,12 +436,12 @@ struct NearSideMatcher {
 enum NearSideHierarchy {
     private static let springboard = XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
 
-    /// The tree /viewHierarchy would return, as the host's TreeNode.
-    static func current() async throws -> NearSideNode {
+    /// The tree /viewHierarchy would return, as the host's TreeNode, and the app it was taken from.
+    static func current() async throws -> (root: NearSideNode, app: XCUIApplication) {
         let handler = ViewHierarchyHandler()
         let foregroundApp = try catchingObjCException { RunningApp.getForegroundApp() }
         guard let foregroundApp = foregroundApp else {
-            return NearSideNode(try catchingObjCException { try handler.elementHierarchy(xcuiElement: springboard) })
+            return (NearSideNode(try catchingObjCException { try handler.elementHierarchy(xcuiElement: springboard) }), springboard)
         }
         let appHierarchy = try catchingObjCException { try handler.getHierarchyWithFallback(foregroundApp) }
         try await SystemPermissionHelper.handleSystemPermissionAlertIfNeeded(appHierarchy: appHierarchy, foregroundApp: foregroundApp)
@@ -453,7 +453,7 @@ enum NearSideHierarchy {
                 statusBars: statusBars,
                 deviceFrame: deviceFrame
             )
-            return NearSideNode(root)
+            return (NearSideNode(root), foregroundApp)
         }
     }
 
@@ -475,8 +475,8 @@ enum NearSideHierarchy {
     }
 
     /// The host's DeviceInfo grid (widthPoints/heightPoints), as /deviceInfo computes it.
-    static func screenSize() throws -> (Int, Int) {
-        let (width, height, _) = try catchingObjCException { try ScreenSizeHelper.actualScreenSize() }
+    static func screenSize(foregroundApp: XCUIApplication) throws -> (Int, Int) {
+        let (width, height, _) = try catchingObjCException { try ScreenSizeHelper.actualScreenSize(foregroundApp: foregroundApp) }
         return (Int(width), Int(height))
     }
 }
@@ -503,8 +503,8 @@ struct NearSideFind {
     @MainActor
     func run() async throws -> (response: [String: Any], found: Bool) {
         let start = DispatchTime.now()
-        let root = try await NearSideHierarchy.current()
-        let (width, height) = try screen ?? NearSideHierarchy.screenSize()
+        let (root, app) = try await NearSideHierarchy.current()
+        let (width, height) = try screen ?? NearSideHierarchy.screenSize(foregroundApp: app)
         let result = NearSideMatcher(screenWidth: width, screenHeight: height)
             .find(root: root, selector: selector, limit: limit)
         return ([

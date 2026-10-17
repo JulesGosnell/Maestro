@@ -7,10 +7,12 @@ struct ScreenSizeHelper {
     private static var lastAppBundleId: String?
     private static var lastOrientation: UIDeviceOrientation?
 
-    static func physicalScreenSize() -> (Float, Float) {
+    /// `foregroundApp`: the caller already looked it up (smithr#1184); detecting it again costs a
+    /// round trip per running app.
+    static func physicalScreenSize(foregroundApp: XCUIApplication? = nil) -> (Float, Float) {
         let springboardBundleId = "com.apple.springboard"
 
-        let app = RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: springboardBundleId)
+        let app = foregroundApp ?? RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: springboardBundleId)
 
         do {
             let currentAppBundleId = app.bundleID
@@ -82,11 +84,11 @@ struct ScreenSizeHelper {
     }
 
     /// Takes device orientation into account.
-    static func actualScreenSize() throws -> (Float, Float, UIDeviceOrientation)
+    static func actualScreenSize(foregroundApp: XCUIApplication? = nil) throws -> (Float, Float, UIDeviceOrientation)
     {
         let orientation = actualOrientation()
 
-        let (width, height) = physicalScreenSize()
+        let (width, height) = physicalScreenSize(foregroundApp: foregroundApp)
         let isLandscape = orientation == .landscapeLeft || orientation == .landscapeRight
         let dimsAlreadyMatchOrientation = isLandscape ? (width > height) : (width <= height)
 
