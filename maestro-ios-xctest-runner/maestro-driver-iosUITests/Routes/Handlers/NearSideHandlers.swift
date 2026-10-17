@@ -1,123 +1,39 @@
 import FlyingFox
 import XCTest
 import os
+import MaestroDriverLib
 
-// smithr#1184: near-side element queries. The selector is resolved ON THE DEVICE with an
-// XCUIElementQuery + NSPredicate and only the matches come back, instead of the host pulling
-// the whole hierarchy (viewHierarchy) and searching it. The whole tree is never serialised here.
+// smithr#1184: near-side element lookups. The host hands the runner a selector and gets back only
+// the matches, instead of pulling the whole hierarchy (/viewHierarchy) and searching it itself.
 //
-// Additive: the host uses these only when GET /capabilities advertises `nearSide`, and only
-// for selectors made purely of `selectorFields`. Anything else stays on the full-dump path.
+// The tree searched is the one /viewHierarchy returns (ViewHierarchyHandler builds both), minus two
+// costs measured there: the springboard's status bars and frame are reused for a few seconds
+// instead of fetched on every lookup, and nothing is serialised. Matching mirrors the host function for function:
+// IOSDriver.mapViewHierarchy, ViewHierarchy.from (filterOutOfBounds), Orchestra.buildFilter and
+// maestro.Filters, as maestro-nearside's NearSideMatcher does for Android. The wire format is that
+// of maestro_android.proto's FindRequest/FindResponse/WaitUntilRequest/WaitUntilResponse, as JSON.
+//
+// Additive: the host uses this only when GET /capabilities advertises `nearSide`.
 
 enum NearSide {
     static let version = 1
     static let ops = ["find", "waitUntil"]
-    static let selectorFields = ["id", "text", "textRegex", "label", "index", "enabled"]
+    // NearSideSelector.SELECTOR_FIELDS
+    static let selectorFields = [
+        "textRegex", "idRegex", "enabled", "selected", "checked", "focused",
+        "index", "below", "above", "leftOf", "rightOf",
+    ]
     static let defaultLimit = 10
-
-    // Orchestra.REGEX_OPTIONS: IGNORE_CASE, DOT_MATCHES_ALL, MULTILINE.
-    static let regexFlags = "(?ism)"
-}
-
-struct NearSideSelector {
-    // Regex, full match on the accessibility identifier (Filters.idMatches).
-    var id: String?
-    // Exact equality against text (title, else value), hintText (placeholderValue) or accessibilityText (label).
-    var text: String?
-    // Regex, full match against the same three attributes, or literal equality (Filters.textMatches).
-    var textRegex: String?
-    // Exact equality against the accessibility label.
-    var label: String?
-    // Position in the matches sorted by (y, x); negative counts from the end (Filters.index).
-    var index: Int?
-    var enabled: Bool?
-
-    static func parse(_ any: Any?) throws -> NearSideSelector {
-        guard let dict = any as? [String: Any] else {
-            throw NearSideError.badRequest("selector must be an object")
-        }
-        let unknown = Set(dict.keys).subtracting(NearSide.selectorFields)
-        if !unknown.isEmpty {
-            // Never ignore a field: a dropped `below` would match the wrong element silently.
-            throw NearSideError.unsupportedSelector("unsupported selector fields: \(unknown.sorted())")
-        }
-        var s = NearSideSelector()
-        s.id = try string(dict, "id")
-        s.text = try string(dict, "text")
-        s.textRegex = try string(dict, "textRegex")
-        s.label = try string(dict, "label")
-        if let v = dict["index"] {
-            guard let n = v as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() else {
-                throw NearSideError.badRequest("index must be a number")
-            }
-            s.index = n.intValue
-        }
-        if let v = dict["enabled"] {
-            guard let n = v as? NSNumber, CFGetTypeID(n) == CFBooleanGetTypeID() else {
-                throw NearSideError.badRequest("enabled must be a boolean")
-            }
-            s.enabled = n.boolValue
-        }
-        if s.id == nil && s.text == nil && s.textRegex == nil && s.label == nil && s.enabled == nil {
-            throw NearSideError.badRequest("selector matches everything")
-        }
-        return s
-    }
-
-    private static func string(_ dict: [String: Any], _ key: String) throws -> String? {
-        guard let v = dict[key] else { return nil }
-        guard let s = v as? String else { throw NearSideError.badRequest("\(key) must be a string") }
-        return s
-    }
-
-    func predicate() -> NSPredicate {
-        var parts: [NSPredicate] = []
-        if let id = id {
-            parts.append(NSPredicate(format: "identifier MATCHES %@", NearSide.regexFlags + id))
-        }
-        if let text = text {
-            parts.append(Self.textPredicate { key in NSPredicate(format: "%K == %@", key, text) })
-        }
-        if let regex = textRegex {
-            let flagged = NearSide.regexFlags + regex
-            parts.append(Self.textPredicate { key in
-                NSPredicate(format: "%K MATCHES %@ OR %K == %@", key, flagged, key, regex)
-            })
-        }
-        if let label = label {
-            parts.append(NSPredicate(format: "label == %@", label))
-        }
-        if let enabled = enabled {
-            parts.append(NSPredicate(format: "enabled == %@", NSNumber(value: enabled)))
-        }
-        return NSCompoundPredicate(andPredicateWithSubpredicates: parts)
-    }
-
-    // IOSDriver.mapViewHierarchy: text = title, or value when title is empty; hintText =
-    // placeholderValue; accessibilityText = label. textMatches unions all three.
-    private static func textPredicate(_ match: (String) -> NSPredicate) -> NSPredicate {
-        let text = NSCompoundPredicate(orPredicateWithSubpredicates: [
-            NSCompoundPredicate(andPredicateWithSubpredicates: [
-                NSPredicate(format: "title != nil AND title != ''"), match("title"),
-            ]),
-            NSCompoundPredicate(andPredicateWithSubpredicates: [
-                NSPredicate(format: "title == nil OR title == ''"), match("value"),
-            ]),
-        ])
-        return NSCompoundPredicate(orPredicateWithSubpredicates: [text, match("placeholderValue"), match("label")])
-    }
+    static let defaultPollMs = 100
 }
 
 enum NearSideError: Error {
     case badRequest(String)
-    case unsupportedSelector(String)
 
     var response: HTTPResponse {
         switch self {
         case .badRequest(let detail):
             return nearSideJSON(["ok": false, "reason": "badRequest", "detail": detail], status: .badRequest)
-        case .unsupportedSelector(let detail):
-            return nearSideJSON(["ok": false, "reason": "unsupportedSelector", "detail": detail], status: .badRequest)
         }
     }
 }
@@ -127,12 +43,12 @@ func nearSideJSON(_ object: Any, status: HTTPStatusCode = .ok) -> HTTPResponse {
     return HTTPResponse(statusCode: status, body: body)
 }
 
-func nearSideDriverError(_ error: Error) -> HTTPResponse {
+private func nearSideDriverError(_ error: Error) -> HTTPResponse {
     nearSideJSON(["ok": false, "reason": "driverError", "detail": error.localizedDescription],
                  status: .internalServerError)
 }
 
-func nearSideBody(_ request: HTTPRequest) async throws -> [String: Any] {
+private func nearSideBody(_ request: HTTPRequest) async throws -> [String: Any] {
     let data = try await request.bodyData
     guard let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
         throw NearSideError.badRequest("body must be a JSON object")
@@ -140,120 +56,462 @@ func nearSideBody(_ request: HTTPRequest) async throws -> [String: Any] {
     return dict
 }
 
-func nearSideMs(since start: DispatchTime) -> Int {
+private func nearSideMs(since start: DispatchTime) -> Int {
     Int((DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000)
 }
 
-@MainActor
-struct NearSideResolver {
-    struct Match {
-        let identifier: String
-        let text: String
-        let label: String
-        let frame: CGRect
-        let enabled: Bool
-        let visible: Bool
+// MARK: - Selector
 
-        var json: [String: Any] {
-            [
-                "id": identifier,
-                "text": text,
-                "label": label,
-                "bounds": [frame.minX, frame.minY, frame.width, frame.height].map { Double($0) },
-                "enabled": enabled,
-                "visible": visible,
-            ]
+/// maestro-nearside's NearSideSelector. Regexes arrive as the pattern the host compiled.
+final class NearSideSelector {
+    struct Pattern {
+        let source: String
+        let regex: NSRegularExpression
+
+        // Orchestra.REGEX_OPTIONS: IGNORE_CASE, DOT_MATCHES_ALL, MULTILINE.
+        init(_ source: String) throws {
+            self.source = source
+            do {
+                // Regex.matches is a whole-input match: \A and \z ignore MULTILINE, as it does.
+                regex = try NSRegularExpression(
+                    pattern: "\\A(?:\(source))\\z",
+                    options: [.caseInsensitive, .dotMatchesLineSeparators, .anchorsMatchLines]
+                )
+            } catch {
+                throw NearSideError.badRequest("invalid regex: \(source)")
+            }
+        }
+
+        func matches(_ value: String) -> Bool {
+            regex.firstMatch(in: value, range: NSRange(value.startIndex..., in: value)) != nil
         }
     }
 
-    struct Result {
-        let matches: [Match]
-        let total: Int
-        let queryMs: Int
+    var textRegex: Pattern?
+    var idRegex: Pattern?
+    var enabled: Bool?
+    var selected: Bool?
+    var checked: Bool?
+    var focused: Bool?
+    var index: Int?
+    var below: NearSideSelector?
+    var above: NearSideSelector?
+    var leftOf: NearSideSelector?
+    var rightOf: NearSideSelector?
+
+    static func parse(_ any: Any?) throws -> NearSideSelector {
+        guard let dict = any as? [String: Any] else {
+            throw NearSideError.badRequest("selector must be an object")
+        }
+        let unknown = Set(dict.keys).subtracting(NearSide.selectorFields)
+        if !unknown.isEmpty {
+            // Never ignore a field: a dropped one would match the wrong element, silently.
+            throw NearSideError.badRequest("unsupported selector fields: \(unknown.sorted())")
+        }
+        let s = NearSideSelector()
+        s.textRegex = try string(dict, "textRegex").map(Pattern.init)
+        s.idRegex = try string(dict, "idRegex").map(Pattern.init)
+        s.enabled = try bool(dict, "enabled")
+        s.selected = try bool(dict, "selected")
+        s.checked = try bool(dict, "checked")
+        s.focused = try bool(dict, "focused")
+        if let v = dict["index"] {
+            guard let n = v as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() else {
+                throw NearSideError.badRequest("index must be a number")
+            }
+            s.index = n.intValue
+        }
+        s.below = try dict["below"].map(parse)
+        s.above = try dict["above"].map(parse)
+        s.leftOf = try dict["leftOf"].map(parse)
+        s.rightOf = try dict["rightOf"].map(parse)
+        return s
     }
 
+    private static func string(_ dict: [String: Any], _ key: String) throws -> String? {
+        guard let v = dict[key] else { return nil }
+        guard let s = v as? String else { throw NearSideError.badRequest("\(key) must be a string") }
+        return s
+    }
+
+    private static func bool(_ dict: [String: Any], _ key: String) throws -> Bool? {
+        guard let v = dict[key] else { return nil }
+        guard let n = v as? NSNumber, CFGetTypeID(n) == CFBooleanGetTypeID() else {
+            throw NearSideError.badRequest("\(key) must be a boolean")
+        }
+        return n.boolValue
+    }
+}
+
+// MARK: - Nodes
+
+/// maestro.TreeNode as IOSDriver.mapViewHierarchy builds it. Structural equality is part of the
+/// matching semantics: the host's filters dedupe with distinct()/toSet(). A class, so the matcher
+/// can memoise per node and the structural hash is computed once. `clickable` is always null on
+/// iOS, so it is left out.
+final class NearSideNode: Hashable {
+    let attributes: [String: String]
+    let children: [NearSideNode]
+    let enabled: Bool
+    let focused: Bool
+    let checked: Bool
+    let selected: Bool
+    private let structuralHash: Int
+
+    // IOSDriver.CHECKABLE_ELEMENTS: checkBox, switch, toggle
+    private static let checkableTypes: Set<Int> = [12, 40, 41]
+
+    // IOSDriver.mapViewHierarchy
+    init(_ element: AXElement) {
+        let checked = NearSideNode.checkableTypes.contains(element.elementType) && element.value == "1"
+        let text: String
+        if let title = element.title {
+            text = title.isEmpty ? (element.value ?? "") : title
+        } else {
+            text = ""
+        }
+        attributes = [
+            "accessibilityText": element.label,
+            "title": element.title ?? "",
+            "value": element.value ?? "",
+            "text": text,
+            "hintText": element.placeholderValue ?? "",
+            "resource-id": element.identifier,
+            "bounds": NearSideNode.boundsString(element.frame),
+            "enabled": String(element.enabled),
+            "focused": String(element.hasFocus),
+            "selected": String(element.selected),
+            "checked": String(checked),
+        ]
+        children = (element.children ?? []).map(NearSideNode.init)
+        enabled = element.enabled
+        focused = element.hasFocus
+        self.checked = checked
+        selected = element.selected
+        structuralHash = NearSideNode.hash(attributes, children)
+    }
+
+    private init(copying node: NearSideNode, children: [NearSideNode]) {
+        attributes = node.attributes
+        self.children = children
+        enabled = node.enabled
+        focused = node.focused
+        checked = node.checked
+        selected = node.selected
+        structuralHash = NearSideNode.hash(attributes, children)
+    }
+
+    private static func hash(_ attributes: [String: String], _ children: [NearSideNode]) -> Int {
+        var hasher = Hasher()
+        hasher.combine(attributes)
+        children.forEach { hasher.combine($0.structuralHash) }
+        return hasher.finalize()
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(structuralHash)
+    }
+
+    // The flags are derived from attributes ("enabled", "focused", ...), so attributes cover them.
+    static func == (lhs: NearSideNode, rhs: NearSideNode) -> Bool {
+        lhs === rhs || (lhs.structuralHash == rhs.structuralHash
+            && lhs.attributes == rhs.attributes && lhs.children == rhs.children)
+    }
+
+    func withChildren(_ children: [NearSideNode]) -> NearSideNode {
+        NearSideNode(copying: self, children: children)
+    }
+
+    // hierarchy.AXFrame.boundsString: Float arithmetic, then Float.toInt()
+    private static func boundsString(_ frame: AXFrame) -> String {
+        let x = Float(frame.x), y = Float(frame.y)
+        return "[\(toInt(x)),\(toInt(y))][\(toInt(x + Float(frame.width))),\(toInt(y + Float(frame.height)))]"
+    }
+
+    // Kotlin's Float.toInt(): truncates, NaN is 0, out of range clamps
+    private static func toInt(_ f: Float) -> Int {
+        if f.isNaN { return 0 }
+        if f >= Float(Int32.max) { return Int(Int32.max) }
+        if f <= Float(Int32.min) { return Int(Int32.min) }
+        return Int(f)
+    }
+
+    func aggregate() -> [NearSideNode] {
+        var out: [NearSideNode] = []
+        func walk(_ n: NearSideNode) {
+            out.append(n)
+            n.children.forEach(walk)
+        }
+        walk(self)
+        return out
+    }
+
+    var json: [String: Any] {
+        [
+            "attributes": attributes,
+            "enabled": enabled,
+            "focused": focused,
+            "checked": checked,
+            "selected": selected,
+        ]
+    }
+}
+
+// MARK: - Matcher
+
+/// maestro-nearside's NearSideMatcher: ViewHierarchy.from (filterOutOfBounds),
+/// Orchestra.buildFilter and maestro.Filters, function for function. Kotlin's Set is
+/// insertion-ordered, so every set here is an ordered, de-duplicated array.
+struct NearSideMatcher {
+    typealias NodeFilter = ([NearSideNode]) -> [NearSideNode]
+
+    let screenWidth: Int
+    let screenHeight: Int
+
+    func find(root: NearSideNode, selector: NearSideSelector, limit: Int) -> (matches: [NearSideNode], truncated: Bool) {
+        let visibleRoot = filterOutOfBounds(root) ?? root
+        let matches = filter(selector)(visibleRoot.aggregate())
+        return (Array(matches.prefix(limit)), matches.count > limit)
+    }
+
+    // ViewHierarchy.kt: TreeNode.filterOutOfBounds
+    private func filterOutOfBounds(_ node: NearSideNode) -> NearSideNode? {
+        if node.attributes["ignoreBoundsFiltering"] == "true" {
+            return node
+        }
+        let filtered = node.children.compactMap(filterOutOfBounds)
+        let visiblePercentage = Self.bounds(of: node).map(visiblePercentage) ?? 0.0
+        if visiblePercentage < 0.1 && filtered.isEmpty {
+            return nil
+        }
+        return node.withChildren(filtered)
+    }
+
+    // Orchestra.buildFilter, restricted to the fields NearSideSelector carries
+    private func filter(_ selector: NearSideSelector) -> NodeFilter {
+        var basicFilters: [NodeFilter] = []
+        var relativeFilters: [NodeFilter] = []
+
+        if let regex = selector.textRegex { basicFilters.append(textMatches(regex)) }
+        if let regex = selector.idRegex { basicFilters.append(idMatches(regex)) }
+
+        if let other = selector.below { relativeFilters.append(relativeTo(filter(other)) { b, o in b.y > o.y }) }
+        if let other = selector.above { relativeFilters.append(relativeTo(filter(other)) { b, o in b.y < o.y }) }
+        if let other = selector.leftOf { relativeFilters.append(relativeTo(filter(other)) { b, o in b.x < o.x }) }
+        if let other = selector.rightOf { relativeFilters.append(relativeTo(filter(other)) { b, o in b.x > o.x }) }
+
+        if let expected = selector.enabled { basicFilters.append { $0.filter { $0.enabled == expected } } }
+        if let expected = selector.selected { basicFilters.append { $0.filter { $0.selected == expected } } }
+        if let expected = selector.checked { basicFilters.append { $0.filter { $0.checked == expected } } }
+        if let expected = selector.focused { basicFilters.append { $0.filter { $0.focused == expected } } }
+
+        let basicFilter: NodeFilter = basicFilters.isEmpty
+            ? { $0 }
+            : deepestMatchingElement(intersect(basicFilters))
+
+        let resultFilter = intersect([basicFilter] + relativeFilters)
+
+        // clickableFirst() is a stable sort on `clickable`, which is null for every iOS node: identity.
+        guard let idx = selector.index else { return resultFilter }
+        let pick = index(idx)
+        return { nodes in pick(resultFilter(nodes)) }
+    }
+
+    // ---- maestro.Filters ----
+
+    private static func distinct(_ nodes: [NearSideNode]) -> [NearSideNode] {
+        var seen = Set<NearSideNode>()
+        return nodes.filter { seen.insert($0).inserted }
+    }
+
+    private func intersect(_ filters: [NodeFilter]) -> NodeFilter {
+        return { nodes in
+            guard let first = filters.first else { return nodes }
+            var result = Self.distinct(first(nodes))
+            for f in filters.dropFirst() {
+                let other = Set(f(nodes))
+                result = result.filter { other.contains($0) }
+            }
+            return result
+        }
+    }
+
+    private func textMatches(_ pattern: NearSideSelector.Pattern) -> NodeFilter {
+        func matches(_ value: String) -> Bool {
+            let stripped = value.replacingOccurrences(of: "\n", with: " ")
+            return pattern.matches(value) || pattern.source == value
+                || pattern.matches(stripped) || pattern.source == stripped
+        }
+        return { nodes in
+            let text = nodes.filter { $0.attributes["text"].map(matches) ?? false }
+            let hint = nodes.filter { $0.attributes["hintText"].map(matches) ?? false }
+            let accessibility = nodes.filter { $0.attributes["accessibilityText"].map(matches) ?? false }
+            return Self.distinct(text + hint + accessibility)
+        }
+    }
+
+    private func idMatches(_ pattern: NearSideSelector.Pattern) -> NodeFilter {
+        return { nodes in
+            let exact = nodes.filter { $0.attributes["resource-id"].map(pattern.matches) ?? false }
+            let withoutPrefix = nodes.filter { node in
+                guard let id = node.attributes["resource-id"] else { return false }
+                // substringAfterLast('/')
+                let suffix = id.range(of: "/", options: .backwards).map { String(id[$0.upperBound...]) } ?? id
+                return pattern.matches(suffix)
+            }
+            return Self.distinct(exact + withoutPrefix)
+        }
+    }
+
+    // Filters.relativeTo as a membership test: it only ever feeds intersect behind the basic
+    // filter, which keeps the basic filter's order, so the host's distance sort never shows.
+    private func relativeTo(_ otherFilter: @escaping NodeFilter, _ predicate: @escaping (Bounds, Bounds) -> Bool) -> NodeFilter {
+        return { nodes in
+            let others = otherFilter(nodes).compactMap(Self.bounds(of:))
+            return nodes.filter { node in
+                guard let b = Self.bounds(of: node) else { return false }
+                return others.contains { predicate(b, $0) }
+            }
+        }
+    }
+
+    // Called with the whole aggregate, so every node is reached once per ancestor: memoised per
+    // node, which is what keeps this linear rather than nodes × depth.
+    private func deepestMatchingElement(_ filter: @escaping NodeFilter) -> NodeFilter {
+        var memo: [ObjectIdentifier: [NearSideNode]] = [:]
+        func deepest(_ node: NearSideNode) -> [NearSideNode] {
+            if let known = memo[ObjectIdentifier(node)] { return known }
+            let below = Self.distinct(node.children.flatMap(deepest))
+            let result = !below.isEmpty ? below : (filter([node]).isEmpty ? [] : [node])
+            memo[ObjectIdentifier(node)] = result
+            return result
+        }
+        return { nodes in Self.distinct(nodes.flatMap(deepest)) }
+    }
+
+    private func index(_ idx: Int) -> NodeFilter {
+        return { nodes in
+            // compareBy(y, x) with missing bounds last, and a stable sort
+            let keyed = nodes.enumerated().map { (i, n) -> (Int, Int, Int, NearSideNode) in
+                let b = Self.bounds(of: n)
+                return (b?.y ?? Int.max, b?.x ?? Int.max, i, n)
+            }
+            let sorted = keyed.sorted { ($0.0, $0.1, $0.2) < ($1.0, $1.1, $1.2) }.map { $0.3 }
+            let resolved = idx >= 0 ? idx : sorted.count + idx
+            return (resolved >= 0 && resolved < sorted.count) ? [sorted[resolved]] : []
+        }
+    }
+
+    // ---- maestro.UiElement ----
+
+    struct Bounds {
+        let x: Int, y: Int, width: Int, height: Int
+    }
+
+    // UiElement.toUiElementOrNull
+    private static func bounds(of node: NearSideNode) -> Bounds? {
+        guard let s = node.attributes["bounds"] else { return nil }
+        let parts = s.replacingOccurrences(of: "][", with: ",")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+            .split(separator: ",")
+            .compactMap { Int($0) }
+        guard parts.count == 4 else { return nil }
+        return Bounds(x: parts[0], y: parts[1], width: parts[2] - parts[0], height: parts[3] - parts[1])
+    }
+
+    // UiElement.getVisiblePercentage
+    private func visiblePercentage(_ b: Bounds) -> Double {
+        if b.width == 0 && b.height == 0 { return 0.0 }
+        let overflow = b.x <= 0 && b.y <= 0 && b.x + b.width >= screenWidth && b.y + b.height >= screenHeight
+        if overflow { return 1.0 }
+        let visibleX = max(0, min(b.x + b.width, screenWidth) - max(b.x, 0))
+        let visibleY = max(0, min(b.y + b.height, screenHeight) - max(b.y, 0))
+        return Double(visibleX * visibleY) / Double(b.width * b.height)
+    }
+}
+
+// MARK: - Hierarchy
+
+@MainActor
+enum NearSideHierarchy {
     private static let springboard = XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
 
-    // `bundleId` lets the host skip foreground-app detection when it already knows the app.
-    static func resolve(_ selector: NearSideSelector, bundleId: String?) throws -> Result {
-        let start = DispatchTime.now()
-        let app: XCUIApplication = try catchingObjCException {
-            if let bundleId = bundleId { return XCUIApplication(bundleIdentifier: bundleId) }
-            return RunningApp.getForegroundApp() ?? springboard
+    /// The tree /viewHierarchy would return, as the host's TreeNode.
+    static func current() async throws -> NearSideNode {
+        let handler = ViewHierarchyHandler()
+        let foregroundApp = try catchingObjCException { RunningApp.getForegroundApp() }
+        guard let foregroundApp = foregroundApp else {
+            return NearSideNode(try catchingObjCException { try handler.elementHierarchy(xcuiElement: springboard) })
         }
-        let predicate = selector.predicate()
-        let snapshots = try catchingObjCException { () -> [XCUIElementSnapshot] in
-            var found = try allMatchingSnapshots(app.descendants(matching: .any).matching(predicate))
-            // viewHierarchy appends springboard's status bars to the app's tree; so must we.
-            if app.bundleID != RunningApp.springboardBundleId {
-                found += try allMatchingSnapshots(springboard.statusBars.descendants(matching: .any).matching(predicate))
-            }
-            return found
-        }
-        let queryMs = nearSideMs(since: start)
+        let appHierarchy = try catchingObjCException { try handler.getHierarchyWithFallback(foregroundApp) }
+        try await SystemPermissionHelper.handleSystemPermissionAlertIfNeeded(appHierarchy: appHierarchy, foregroundApp: foregroundApp)
 
-        var matches = try catchingObjCException { deepest(snapshots).map { s -> Match in
-            let title = s.title
-            let value = (s.value as? String) ?? ""
-            return Match(
-                identifier: s.identifier,
-                text: title.isEmpty ? value : title,
-                label: s.label,
-                frame: s.frame,
-                enabled: s.isEnabled,
-                visible: !s.frame.isEmpty && s.frame.intersects(rootFrame(of: s) ?? app.frame)
+        return try catchingObjCException {
+            let (statusBars, deviceFrame) = springboardParts(handler)
+            let root = try handler.assembleAppViewHierarchy(
+                appHierarchy: appHierarchy,
+                statusBars: statusBars,
+                deviceFrame: deviceFrame
             )
-        } }
-        let total = matches.count
-        if let index = selector.index {
-            let sorted = matches.sorted { ($0.frame.minY, $0.frame.minX) < ($1.frame.minY, $1.frame.minX) }
-            let resolved = index >= 0 ? index : sorted.count + index
-            matches = (resolved >= 0 && resolved < sorted.count) ? [sorted[resolved]] : []
+            return NearSideNode(root)
         }
-        return Result(matches: matches, total: total, queryMs: queryMs)
     }
 
-    // One query evaluation returning every match's snapshot (XCTest's private
-    // -allMatchingSnapshotsWithError:, as WebDriverAgent uses). Reading attributes through
-    // XCUIElement instead re-resolves the query on every property access.
-    private static func allMatchingSnapshots(_ query: XCUIElementQuery) throws -> [XCUIElementSnapshot] {
-        let selector = NSSelectorFromString("allMatchingSnapshotsWithError:")
-        guard query.responds(to: selector) else {
-            return try query.allElementsBoundByIndex.map { try $0.snapshot() }
+    // The status bars and springboard frame, fetched exactly as /viewHierarchy fetches them but
+    // reused for springboardTTLms: they cost more than the app's own tree (85 ms of a 155 ms
+    // /viewHierarchy, measured), and a lookup polling every 100 ms would pay that on every poll.
+    // So status-bar content (clock, battery) may be up to springboardTTLms old.
+    static let springboardTTLms = 3000
+    private static var springboardCache: (at: DispatchTime, statusBars: [AXElement], frame: CGRect)?
+
+    private static func springboardParts(_ handler: ViewHierarchyHandler) -> ([AXElement], CGRect) {
+        if let cached = springboardCache, nearSideMs(since: cached.at) < springboardTTLms {
+            return (cached.statusBars, cached.frame)
         }
-        typealias Fn = @convention(c) (AnyObject, Selector, AutoreleasingUnsafeMutablePointer<NSError?>?) -> NSArray?
-        let fn = unsafeBitCast(query.method(for: selector), to: Fn.self)
-        var error: NSError?
-        let raw = fn(query, selector, &error)
-        if let error = error { throw error }
-        let objects = (raw as? [AnyObject]) ?? []
-        let snapshots = objects.compactMap { $0 as? XCUIElementSnapshot }
-        if snapshots.count != objects.count {
-            throw AppError(message: "allMatchingSnapshotsWithError: returned objects that are not XCUIElementSnapshot")
-        }
-        return snapshots
+        let statusBars = handler.fullStatusBars(springboard) ?? []
+        let frame = springboard.frame
+        springboardCache = (DispatchTime.now(), statusBars, frame)
+        return (statusBars, frame)
     }
 
-    // The application's frame, from the snapshot tree this query already fetched. `app.frame`
-    // would resolve the application again: one more round trip to the app per find.
-    private static func rootFrame(of snapshot: XCUIElementSnapshot) -> CGRect? {
-        guard var node = snapshot as? NSObject, node.responds(to: NSSelectorFromString("parent")) else { return nil }
-        while let parent = node.value(forKey: "parent") as? NSObject { node = parent }
-        return (node as? XCUIElementSnapshot)?.frame
+    /// The host's DeviceInfo grid (widthPoints/heightPoints), as /deviceInfo computes it.
+    static func screenSize() throws -> (Int, Int) {
+        let (width, height, _) = try catchingObjCException { try ScreenSizeHelper.actualScreenSize() }
+        return (Int(width), Int(height))
+    }
+}
+
+// MARK: - Handlers
+
+struct NearSideFind {
+    let selector: NearSideSelector
+    let limit: Int
+    let screen: (Int, Int)?
+
+    // FindRequest {selector, limit, screenWidth, screenHeight}
+    static func parse(_ any: Any?) throws -> NearSideFind {
+        guard let dict = any as? [String: Any] else { throw NearSideError.badRequest("find must be an object") }
+        let limit = (dict["limit"] as? Int).flatMap { $0 > 0 ? $0 : nil } ?? NearSide.defaultLimit
+        var screen: (Int, Int)?
+        if let w = dict["screenWidth"] as? Int, let h = dict["screenHeight"] as? Int, w > 0, h > 0 {
+            screen = (w, h)
+        }
+        return NearSideFind(selector: try NearSideSelector.parse(dict["selector"]), limit: limit, screen: screen)
     }
 
-    // Filters.deepestMatchingElement: a match with another match beneath it is dropped, so a
-    // React Native container whose label aggregates its children's does not win over the child.
-    private static func deepest(_ snapshots: [XCUIElementSnapshot]) -> [XCUIElementSnapshot] {
-        guard snapshots.count > 1 else { return snapshots }
-        let ids = Set(snapshots.map { ObjectIdentifier($0 as AnyObject) })
-        func hasMatchBelow(_ s: XCUIElementSnapshot) -> Bool {
-            for child in s.children {
-                if ids.contains(ObjectIdentifier(child as AnyObject)) || hasMatchBelow(child) { return true }
-            }
-            return false
-        }
-        return snapshots.filter { !hasMatchBelow($0) }
+    // FindResponse {matches, truncated, deviceMs}
+    @MainActor
+    func run() async throws -> (response: [String: Any], found: Bool) {
+        let start = DispatchTime.now()
+        let root = try await NearSideHierarchy.current()
+        let (width, height) = try screen ?? NearSideHierarchy.screenSize()
+        let result = NearSideMatcher(screenWidth: width, screenHeight: height)
+            .find(root: root, selector: selector, limit: limit)
+        return ([
+            "matches": result.matches.map { $0.json },
+            "truncated": result.truncated,
+            "deviceMs": nearSideMs(since: start),
+        ], !result.matches.isEmpty)
     }
 }
 
@@ -268,22 +526,13 @@ struct CapabilitiesHandler: HTTPHandler {
     }
 }
 
-// POST /find {selector, limit?: 10, bundleId?} → {matches, truncated, deviceMs}
+// POST /find  FindRequest → FindResponse
 @MainActor
 struct FindHandler: HTTPHandler {
     func handleRequest(_ request: HTTPRequest) async throws -> HTTPResponse {
-        let start = DispatchTime.now()
         do {
-            let body = try await nearSideBody(request)
-            let selector = try NearSideSelector.parse(body["selector"])
-            let limit = max(1, (body["limit"] as? Int) ?? NearSide.defaultLimit)
-            let result = try NearSideResolver.resolve(selector, bundleId: body["bundleId"] as? String)
-            return nearSideJSON([
-                "matches": result.matches.prefix(limit).map { $0.json },
-                "truncated": result.matches.count > limit,
-                "deviceMs": nearSideMs(since: start),
-                "queryMs": result.queryMs,
-            ])
+            let find = try NearSideFind.parse(try await nearSideBody(request))
+            return nearSideJSON(try await find.run().response)
         } catch let error as NearSideError {
             return error.response
         } catch {
@@ -293,60 +542,35 @@ struct FindHandler: HTTPHandler {
     }
 }
 
-// POST /waitUntil {selector, condition: visible|gone|enabled, timeoutMs, pollMs?: 100, bundleId?}
-//   → {ok, elapsedMs, polls, matched?, deviceMs}. The poll loop runs here, not on the host.
+// POST /waitUntil  WaitUntilRequest {find, condition: visible|gone, timeoutMs, pollMs}
+//   → WaitUntilResponse {ok, elapsedMs, last}. The poll loop runs here, and never overruns timeoutMs.
 @MainActor
 struct WaitUntilHandler: HTTPHandler {
-    enum Condition: String { case visible, gone, enabled }
-
     func handleRequest(_ request: HTTPRequest) async throws -> HTTPResponse {
         let start = DispatchTime.now()
         do {
             let body = try await nearSideBody(request)
-            let selector = try NearSideSelector.parse(body["selector"])
-            guard let raw = body["condition"] as? String, let condition = Condition(rawValue: raw) else {
-                throw NearSideError.badRequest("condition must be one of visible, gone, enabled")
+            let find = try NearSideFind.parse(body["find"])
+            let condition = body["condition"] as? String
+            guard condition == "visible" || condition == "gone" else {
+                throw NearSideError.badRequest("condition must be visible or gone")
             }
             guard let timeoutMs = body["timeoutMs"] as? Int, timeoutMs >= 0 else {
                 throw NearSideError.badRequest("timeoutMs is required")
             }
-            let pollMs = max(10, (body["pollMs"] as? Int) ?? 100)
-            let bundleId = body["bundleId"] as? String
+            let pollMs = max(10, (body["pollMs"] as? Int).flatMap { $0 > 0 ? $0 : nil } ?? NearSide.defaultPollMs)
 
-            var polls = 0
             while true {
-                polls += 1
                 let pollStart = DispatchTime.now()
-                let result = try NearSideResolver.resolve(selector, bundleId: bundleId)
-                let hit: NearSideResolver.Match?
-                let met: Bool
-                switch condition {
-                case .visible:
-                    hit = result.matches.first { $0.visible }
-                    met = hit != nil
-                case .enabled:
-                    hit = result.matches.first { $0.visible && $0.enabled }
-                    met = hit != nil
-                case .gone:
-                    hit = nil
-                    met = !result.matches.contains { $0.visible }
-                }
+                let (last, found) = try await find.run()
+                let met = (condition == "visible") == found
                 let elapsed = nearSideMs(since: start)
-                // Stop when the next poll could not finish inside timeoutMs: the op never overruns.
+                // Stop when the next poll could not finish inside timeoutMs.
                 let pollCost = nearSideMs(since: pollStart)
                 if met || elapsed + min(pollMs, timeoutMs - elapsed) + pollCost > timeoutMs {
-                    var response: [String: Any] = [
-                        "ok": met,
-                        "elapsedMs": elapsed,
-                        "polls": polls,
-                        "deviceMs": elapsed,
-                    ]
-                    if !met { response["reason"] = "timeout" }
-                    if let hit = hit { response["matched"] = hit.json }
-                    return nearSideJSON(response)
+                    return nearSideJSON(["ok": met, "elapsedMs": elapsed, "last": last])
                 }
-                let remaining = timeoutMs - elapsed
-                try await Task.sleep(nanoseconds: UInt64(min(pollMs, remaining)) * 1_000_000)
+                try await Task.sleep(nanoseconds: UInt64(min(pollMs, timeoutMs - elapsed)) * 1_000_000)
             }
         } catch let error as NearSideError {
             return error.response

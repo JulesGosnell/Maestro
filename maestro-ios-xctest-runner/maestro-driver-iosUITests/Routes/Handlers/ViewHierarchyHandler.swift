@@ -57,13 +57,22 @@ struct ViewHierarchyHandler: HTTPHandler {
         let statusBars = logger.measure(message: "Fetch status bar hierarchy") {
             fullStatusBars(springboardApplication)
         } ?? []
-        
+
+        return try assembleAppViewHierarchy(
+            appHierarchy: appHierarchy,
+            statusBars: statusBars,
+            deviceFrame: springboardApplication.frame
+        )
+    }
+
+    // The tree the host sees, from parts the caller fetched: /viewHierarchy fetches the status
+    // bars and device frame one way, the near-side lookups (smithr#1184) a cheaper way.
+    func assembleAppViewHierarchy(appHierarchy: AXElement, statusBars: [AXElement], deviceFrame: CGRect) throws -> AXElement {
         // Fetch Safari WebView hierarchy for iOS 26+ (runs in separate SafariViewService process)
         let safariWebViewHierarchy = logger.measure(message: "Fetch Safari WebView hierarchy") {
             getSafariWebViewHierarchy()
         }
 
-        let deviceFrame = springboardApplication.frame
         let deviceAxFrame = [
             "X": Double(deviceFrame.minX),
             "Y": Double(deviceFrame.minY),
@@ -299,7 +308,7 @@ struct ViewHierarchyHandler: HTTPHandler {
         }
     }
 
-    private func elementHierarchy(xcuiElement: XCUIElement) throws -> AXElement {
+    func elementHierarchy(xcuiElement: XCUIElement) throws -> AXElement {
         let snapshotDictionary = try xcuiElement.snapshot().dictionaryRepresentation
         return AXElement(snapshotDictionary)
     }
