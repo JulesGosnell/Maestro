@@ -111,6 +111,7 @@
 		BBBB00022DF24A0000000002 /* AXFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBB00122DF24A0000000012 /* AXFrame.swift */; };
 		BBBB00032DF24A0000000003 /* ElementType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBB00132DF24A0000000013 /* ElementType.swift */; };
 		BBBB00042DF24A0000000004 /* PermissionValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBB00142DF24A0000000014 /* PermissionValue.swift */; };
+		1184A0010000000000000004 /* NearSideMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1184A0010000000000000003 /* NearSideMatcher.swift */; };
 		BBBB00052DF24A0000000005 /* PermissionButtonFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBB00152DF24A0000000015 /* PermissionButtonFinder.swift */; };
 		BBBB00062DF24A0000000006 /* MaestroDriverLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBB00162DF24A0000000016 /* MaestroDriverLib.swift */; };
 		BBBB00072DF24A0000000007 /* MaestroDriverLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBBB00202DF24A0000000020 /* MaestroDriverLib.framework */; };
@@ -367,6 +368,7 @@
 		BBBB00122DF24A0000000012 /* AXFrame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXFrame.swift; sourceTree = "<group>"; };
 		BBBB00132DF24A0000000013 /* ElementType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementType.swift; sourceTree = "<group>"; };
 		BBBB00142DF24A0000000014 /* PermissionValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionValue.swift; sourceTree = "<group>"; };
+		1184A0010000000000000003 /* NearSideMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearSideMatcher.swift; sourceTree = "<group>"; };
 		BBBB00152DF24A0000000015 /* PermissionButtonFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionButtonFinder.swift; sourceTree = "<group>"; };
 		BBBB00162DF24A0000000016 /* MaestroDriverLib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaestroDriverLib.swift; sourceTree = "<group>"; };
 		BBBB00172DF24A0000000017 /* PermissionButtonFinderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionButtonFinderTests.swift; sourceTree = "<group>"; };
@@ -792,6 +794,7 @@
 			isa = PBXGroup;
 			children = (
 				BBBB00152DF24A0000000015 /* PermissionButtonFinder.swift */,
+				1184A0010000000000000003 /* NearSideMatcher.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1104,6 +1107,7 @@
 				BBBB00032DF24A0000000003 /* ElementType.swift in Sources */,
 				BBBB00042DF24A0000000004 /* PermissionValue.swift in Sources */,
 				BBBB00052DF24A0000000005 /* PermissionButtonFinder.swift in Sources */,
+				1184A0010000000000000004 /* NearSideMatcher.swift in Sources */,
 				BBBB00062DF24A0000000006 /* MaestroDriverLib.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
