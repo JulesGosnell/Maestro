@@ -40,6 +40,12 @@ class RouteHandlerFactory {
             return TerminateAppHandler()
         case .launchApp:
              return LaunchAppHandler()
+        case .capabilities:
+            return CapabilitiesHandler()
+        case .find:
+            return FindHandler()
+        case .waitUntil:
+            return WaitUntilHandler()
         }
     }
 }

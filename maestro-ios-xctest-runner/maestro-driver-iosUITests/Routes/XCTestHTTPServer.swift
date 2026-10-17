@@ -20,6 +20,9 @@ enum Route: String, CaseIterable {
     case keyboard
     case launchApp
     case terminateApp
+    case capabilities
+    case find
+    case waitUntil
 
     func toHTTPRoute() -> HTTPRoute {
         return HTTPRoute(rawValue)
