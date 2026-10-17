@@ -1,0 +1,4532 @@
+{
+  "version" : 1,
+  "cases" : [ {
+    "name" : "text exact",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "OK"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[100,1000][300,1100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "OK"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text is case-insensitive",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "ok"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[100,1000][300,1100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "OK"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text regex must match the whole value",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Can"
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "text regex wildcard",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : ".*a.*"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,1000][600,1100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Cancel"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text dot matches newline",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][500,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "line one\nline two"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "line one.line two"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][500,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "line one\nline two"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text newline-stripped variant",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][500,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "a\nb"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "a b.*"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][500,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "a\nb"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text literal pattern equals value",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][500,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Price [1]"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Price [1]"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][500,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Price [1]"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text literal pattern equals newline-stripped value",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][500,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Price\n[1]"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Price [1]"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][500,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Price\n[1]"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "hintText matches",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][1080,400]",
+            "hintText" : "Email",
+            "ignoreBoundsFiltering" : "false",
+            "text" : ""
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Email"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][1080,400]",
+        "hintText" : "Email",
+        "ignoreBoundsFiltering" : "false",
+        "text" : ""
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "accessibilityText matches",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "accessibilityText" : "Close",
+            "bounds" : "[900,100][1000,200]",
+            "ignoreBoundsFiltering" : "false"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Close"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "accessibilityText" : "Close",
+        "bounds" : "[900,100][1000,200]",
+        "ignoreBoundsFiltering" : "false"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text, hint and accessibilityText union keeps tree order",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "accessibilityText" : "Go",
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "hintText" : "Go",
+            "ignoreBoundsFiltering" : "false"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,700][100,800]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Go"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Go"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "accessibilityText" : "Go",
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "hintText" : "Go",
+        "ignoreBoundsFiltering" : "false"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,700][100,800]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Go"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text no match",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Nothing"
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "id full resource name",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/ok"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/cancel"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "idRegex" : "com.example:id/ok"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "com.example:id/ok"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "id without package prefix",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/ok"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/cancel"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "idRegex" : "ok"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "com.example:id/ok"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "id regex",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/ok"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "com.example:id/cancel"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "idRegex" : ".*c.*"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "com.example:id/ok"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "com.example:id/cancel"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "text and id together",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "idRegex" : "c4"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,600][200,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c4",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "enabled false",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Save"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Save"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Save",
+      "enabled" : false
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Save"
+      },
+      "clickable" : false,
+      "enabled" : false,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "enabled true",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Save"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Save"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Save",
+      "enabled" : true
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Save"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "selected",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Tab"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[200,300][300,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Tab"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : true
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Tab",
+      "selected" : true
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[200,300][300,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Tab"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : true
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "checked false",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Box"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : true,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Box"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Box",
+      "checked" : false
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Box"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "focused",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Field"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Field"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : true,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Field",
+      "focused" : true
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Field"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : true,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "a null flag never equals false",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Odd"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : null,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Odd"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Odd",
+      "enabled" : false
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Odd"
+      },
+      "clickable" : false,
+      "enabled" : false,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "flags alone: the deepest enabled node is the full-screen container",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Off"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "enabled" : true
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,0][1080,1920]",
+        "ignoreBoundsFiltering" : "false"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "deepest match wins over a matching parent",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][1080,500]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Row"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,300][500,400]",
+              "ignoreBoundsFiltering" : "false",
+              "text" : "Row"
+            },
+            "children" : [ ],
+            "clickable" : false,
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Row"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][500,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Row"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "a parent matches when no child does",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][1080,500]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Row"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,300][500,400]",
+              "ignoreBoundsFiltering" : "false",
+              "text" : "Other"
+            },
+            "children" : [ ],
+            "clickable" : false,
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Row"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][1080,500]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Row"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "structurally equal nodes collapse into one",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "nodes differing only in a flag stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : true,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : true,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "clickable first, stable: true then false then null",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Item"
+          },
+          "children" : [ ],
+          "clickable" : null,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,500][100,600]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Item"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,700][100,800]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Item"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,900][100,1000]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Item"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1100][100,1200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Item"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Item"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,700][100,800]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Item"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,1100][100,1200]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Item"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,500][100,600]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Item"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,900][100,1000]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Item"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Item"
+      },
+      "clickable" : null,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "index 0 is top-left in reading order",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : 0
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,400][200,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c1",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "index 2",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : 2
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[800,400][1000,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c3",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "index -1 is the last in reading order",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : -1
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[800,600][1000,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c6",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "index -6 is the first",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : -6
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,400][200,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c1",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "index past the end",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : 6
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "index before the start",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : -7
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "index sorts a node without bounds last",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "ignoreBoundsFiltering" : "false",
+          "resource-id" : "nobounds",
+          "text" : "Cell"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,0][100,100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "x"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      }, {
+        "attributes" : {
+          "bounds" : "[400,600][600,700]",
+          "ignoreBoundsFiltering" : "false",
+          "resource-id" : "c5",
+          "text" : "Cell"
+        },
+        "children" : [ ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      }, {
+        "attributes" : {
+          "bounds" : "[0,400][200,500]",
+          "ignoreBoundsFiltering" : "false",
+          "resource-id" : "c1",
+          "text" : "Cell"
+        },
+        "children" : [ ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : -1
+    },
+    "expected" : [ {
+      "attributes" : {
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "nobounds",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "below",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1800][1080,1900]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Footer"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : ".*",
+      "below" : {
+        "textRegex" : "Cancel"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,1800][1080,1900]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Footer"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "above",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1800][1080,1900]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Footer"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Title|OK|Footer",
+      "above" : {
+        "textRegex" : "OK"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,100][1080,200]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Title"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "leftOf",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1800][1080,1900]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Footer"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "OK|Cancel",
+      "leftOf" : {
+        "textRegex" : "Cancel"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[100,1000][300,1100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "OK"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "rightOf",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,1000][600,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Cancel"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1800][1080,1900]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Footer"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "OK|Cancel",
+      "rightOf" : {
+        "textRegex" : "OK"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,1000][600,1100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Cancel"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "below a missing anchor matches nothing",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "OK",
+      "below" : {
+        "textRegex" : "Nope"
+      }
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "below an anchor with its own index",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "below" : {
+        "textRegex" : "Cell",
+        "index" : 0
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,600][600,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c5",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,600][200,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c4",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[800,600][1000,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c6",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "two relative selectors intersect",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "below" : {
+        "idRegex" : "c2"
+      },
+      "rightOf" : {
+        "idRegex" : "c4"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,600][600,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c5",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[800,600][1000,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c6",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "relative selector with index on the result",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell",
+      "index" : 1,
+      "below" : {
+        "idRegex" : "c1"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,600][600,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c5",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "a relative selector alone matches every node with bounds below the anchor",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,100][1080,200]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Title"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[100,1000][300,1100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "OK"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1800][1080,1900]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Footer"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "below" : {
+        "textRegex" : "OK"
+      }
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,1800][1080,1900]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Footer"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "an element entirely off screen is pruned",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,2000][100,2100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Gone"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Here"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Gone|Here"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Here"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "an element under 10% visible is pruned, at 10% it is kept",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,1916][100,1966]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "8pct",
+            "text" : "Edge"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,1915][100,1965]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "10pct",
+            "text" : "Edge"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Edge"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,1915][100,1965]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "10pct",
+        "text" : "Edge"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "an element overflowing the whole screen counts as fully visible",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[-10,-10][2000,3000]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Huge"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Huge"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[-10,-10][2000,3000]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Huge"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "an off-screen parent survives for its visible child",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,2000][100,2100]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Parent"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,300][100,400]",
+              "ignoreBoundsFiltering" : "false",
+              "text" : "Child"
+            },
+            "children" : [ ],
+            "clickable" : false,
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Parent"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,2000][100,2100]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Parent"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "ignoreBoundsFiltering keeps an off-screen node",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,2000][100,2100]",
+            "ignoreBoundsFiltering" : "true",
+            "text" : "Toast"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Toast"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,2000][100,2100]",
+        "ignoreBoundsFiltering" : "true",
+        "text" : "Toast"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "zero-size bounds are pruned",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[10,10][10,10]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Dot"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Dot"
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "zero width with height is NaN visible, and kept",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[10,10][10,50]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Line"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Line"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[10,10][10,50]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Line"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "unparseable bounds are pruned",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "garbage",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Bad"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Bad"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Bad"
+    },
+    "expected" : [ ],
+    "truncated" : false
+  }, {
+    "name" : "missing bounds are pruned unless a child is visible",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "ignoreBoundsFiltering" : "false",
+            "text" : "NoBounds"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "kept",
+            "text" : "NoBounds"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,300][100,400]",
+              "ignoreBoundsFiltering" : "false",
+              "text" : "Child"
+            },
+            "children" : [ ],
+            "clickable" : false,
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "NoBounds"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "kept",
+        "text" : "NoBounds"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "a smaller screen prunes more",
+    "screenWidth" : 500,
+    "screenHeight" : 1000,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[600,300][700,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Wide"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Wide"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Wide"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Wide"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "limit truncates",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 2,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,600][600,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c5",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,400][200,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c1",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : true
+  }, {
+    "name" : "limit equal to the count is not truncated",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 6,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[400,600][600,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c5",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,400][200,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c1",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,400][1000,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c3",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,600][200,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c4",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[400,400][600,500]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c2",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[800,600][1000,700]",
+            "ignoreBoundsFiltering" : "false",
+            "resource-id" : "c6",
+            "text" : "Cell"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Cell"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[400,600][600,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c5",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,400][200,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c1",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[800,400][1000,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c3",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,600][200,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c4",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[400,400][600,500]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c2",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[800,600][1000,700]",
+        "ignoreBoundsFiltering" : "false",
+        "resource-id" : "c6",
+        "text" : "Cell"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  } ]
+}

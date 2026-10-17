@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-
+    testImplementation(libs.jackson.core.databind)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
@@ -36,4 +36,7 @@ mavenPublishing {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+    // smithr#1184: the golden vectors the iOS port is held to; -PnearSideGoldenWrite=true regenerates them
+    systemProperty("nearSide.golden.file", file("src/test/resources/near-side-golden.json").absolutePath)
+    systemProperty("nearSide.golden.write", project.findProperty("nearSideGoldenWrite") ?: "false")
 }
