@@ -427,7 +427,7 @@ class Maestro(
     ): FindElementResult? {
         if (nearSide != null && viewHierarchy == null) {
             try {
-                return findElementNearSide(timeoutMs, nearSide)
+                return findElementNearSide(timeoutMs, nearSide).also { verifyNearSide(it, filter) }
             } catch (e: Exception) {
                 nearSideStats.driverErrors++
                 LOGGER.warn("Near-side lookup failed; using the full hierarchy for this lookup", e)
@@ -464,7 +464,29 @@ class Maestro(
         var lookups: Int = 0,
         var totalMs: Long = 0,
         var driverErrors: Int = 0,
+        var verified: Int = 0,
+        var mismatches: Int = 0,
     )
+
+    /**
+     * `-Dmaestro.nearSide=verify`: after each near-side lookup, take one full dump and check the
+     * host's own filter picks the same element. A diagnostic for real screens; the dump happens
+     * a moment later, so a screen still changing can disagree without either path being wrong.
+     */
+    private fun verifyNearSide(nearSide: FindElementResult?, filter: ElementFilter) {
+        if (System.getProperty("maestro.nearSide") != "verify") return
+
+        val full = filter(viewHierarchy().aggregate()).firstOrNull()?.toUiElementOrNull()
+        val same = nearSide?.element?.treeNode?.copy(children = emptyList()) == full?.treeNode?.copy(children = emptyList())
+
+        nearSideStats.verified++
+        if (!same) nearSideStats.mismatches++
+        LOGGER.info(
+            "Near-side verify: ${if (same) "MATCH" else "MISMATCH"} " +
+                "nearSide=${nearSide?.element?.treeNode?.attributes} full=${full?.treeNode?.attributes} " +
+                "(${nearSideStats.verified} verified, ${nearSideStats.mismatches} mismatches)"
+        )
+    }
 
     val nearSideStats = NearSideStats()
 
