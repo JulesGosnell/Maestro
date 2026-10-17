@@ -1781,6 +1781,386 @@
     } ],
     "truncated" : false
   }, {
+    "name" : "nodes differing only in enabled stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : false,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "nodes differing only in checked stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : true,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : true,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "nodes differing only in selected stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : true
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : true
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "nodes differing only in clickable stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : true,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : true,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
+    "name" : "nodes differing only in clickable null versus false stay distinct",
+    "screenWidth" : 1080,
+    "screenHeight" : 1920,
+    "limit" : 10,
+    "tree" : {
+      "attributes" : { },
+      "children" : [ {
+        "attributes" : {
+          "bounds" : "[0,0][1080,1920]",
+          "ignoreBoundsFiltering" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : null,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,300][100,400]",
+            "ignoreBoundsFiltering" : "false",
+            "text" : "Same"
+          },
+          "children" : [ ],
+          "clickable" : false,
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "clickable" : false,
+        "enabled" : true,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      } ],
+      "clickable" : null,
+      "enabled" : null,
+      "focused" : null,
+      "checked" : null,
+      "selected" : null
+    },
+    "selector" : {
+      "textRegex" : "Same"
+    },
+    "expected" : [ {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : false,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    }, {
+      "attributes" : {
+        "bounds" : "[0,300][100,400]",
+        "ignoreBoundsFiltering" : "false",
+        "text" : "Same"
+      },
+      "clickable" : null,
+      "enabled" : true,
+      "focused" : false,
+      "checked" : false,
+      "selected" : false
+    } ],
+    "truncated" : false
+  }, {
     "name" : "clickable first, stable: true then false then null",
     "screenWidth" : 1080,
     "screenHeight" : 1920,

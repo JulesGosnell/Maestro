@@ -266,6 +266,32 @@ class NearSideGoldenTest {
                 screen(el(text = "Same", bounds = "[0,300][100,400]"), el(text = "Same", bounds = "[0,300][100,400]", focused = true)),
                 NearSideSelector(textRegex = "Same"),
             ),
+            // Dedupe compares every flag: one case per flag, and null is not false
+            Case(
+                "nodes differing only in enabled stay distinct",
+                screen(el(text = "Same", bounds = "[0,300][100,400]"), el(text = "Same", bounds = "[0,300][100,400]", enabled = false)),
+                NearSideSelector(textRegex = "Same"),
+            ),
+            Case(
+                "nodes differing only in checked stay distinct",
+                screen(el(text = "Same", bounds = "[0,300][100,400]"), el(text = "Same", bounds = "[0,300][100,400]", checked = true)),
+                NearSideSelector(textRegex = "Same"),
+            ),
+            Case(
+                "nodes differing only in selected stay distinct",
+                screen(el(text = "Same", bounds = "[0,300][100,400]"), el(text = "Same", bounds = "[0,300][100,400]", selected = true)),
+                NearSideSelector(textRegex = "Same"),
+            ),
+            Case(
+                "nodes differing only in clickable stay distinct",
+                screen(el(text = "Same", bounds = "[0,300][100,400]"), el(text = "Same", bounds = "[0,300][100,400]", clickable = true)),
+                NearSideSelector(textRegex = "Same"),
+            ),
+            Case(
+                "nodes differing only in clickable null versus false stay distinct",
+                screen(el(text = "Same", bounds = "[0,300][100,400]", clickable = null), el(text = "Same", bounds = "[0,300][100,400]", clickable = false)),
+                NearSideSelector(textRegex = "Same"),
+            ),
 
             // ordering
             Case(
