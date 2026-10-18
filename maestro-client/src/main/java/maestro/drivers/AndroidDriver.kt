@@ -44,6 +44,7 @@ import maestro.utils.MaestroTimer
 import maestro.utils.Metrics
 import maestro.utils.MetricsProvider
 import maestro.utils.ScreenshotUtils
+import maestro.utils.SettleStats
 import maestro.utils.StringUtils.toRegexSafe
 import maestro_android.*
 import net.dongliu.apk.parser.ApkFile
@@ -750,10 +751,12 @@ class AndroidDriver(
 
     override fun waitForAppToSettle(initialHierarchy: ViewHierarchy?, appId: String?, timeoutMs: Int?): ViewHierarchy? {
         return metrics.measured("operation", mapOf("command" to "waitForAppToSettle", "appId" to appId, "timeoutMs" to timeoutMs.toString())) {
-            if (appId != null) {
-                waitForWindowToSettle(appId, initialHierarchy, timeoutMs)
-            } else {
-                ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+            SettleStats.of(this).phase(SettleStats.Phase.SETTLE) {
+                if (appId != null) {
+                    waitForWindowToSettle(appId, initialHierarchy, timeoutMs)
+                } else {
+                    ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+                }
             }
         }
     }

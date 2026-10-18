@@ -171,6 +171,8 @@ class Orchestra(
 
         onFlowStart(commands)
 
+        maestro.settleStats.reset()
+
         executeDefineVariablesCommands(commands, config)
         // filter out DefineVariablesCommand to not execute it twice
         val filteredCommands = commands.filter { it.asCommand() !is DefineVariablesCommand }
@@ -208,6 +210,9 @@ class Orchestra(
             } ?: true
 
             jsEngine.close()
+
+            // smithr#1246: one stdout line per flow (maestro.log capture is not reliable in CI)
+            maestro.settleStats.emitFlowSummary(config?.name)
 
             exception?.let { throw it }
 
@@ -320,6 +325,17 @@ class Orchestra(
      * Returns true if the command mutated device state (i.e. interacted with the device), false otherwise.
      */
     private suspend fun executeCommand(maestroCommand: MaestroCommand, config: MaestroConfig?): Boolean {
+        // smithr#1246: one SETTLE-STATS line per command (settle / find / other); measure only.
+        val type = maestroCommand.asCommand()?.let { it::class.simpleName } ?: "Unknown"
+        val handle = maestro.settleStats.beginCommand(type)
+        try {
+            return executeCommandUnmeasured(maestroCommand, config)
+        } finally {
+            maestro.settleStats.endCommand(handle)
+        }
+    }
+
+    private suspend fun executeCommandUnmeasured(maestroCommand: MaestroCommand, config: MaestroConfig?): Boolean {
         val command = maestroCommand.asCommand()
 
         if (!currentCoroutineContext().isActive) {

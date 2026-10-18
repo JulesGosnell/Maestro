@@ -26,6 +26,7 @@ import maestro.drivers.CdpWebDriver
 import maestro.nearside.NearSideSelector
 import maestro.utils.MaestroTimer
 import maestro.utils.ScreenshotUtils
+import maestro.utils.SettleStats
 import maestro.utils.SocketUtils
 import okio.Buffer
 import okio.Sink
@@ -424,6 +425,15 @@ class Maestro(
         filter: ElementFilter,
         viewHierarchy: ViewHierarchy? = null,
         nearSide: NearSideSelector? = null,
+    ): FindElementResult? = SettleStats.of(driver).phase(SettleStats.Phase.FIND) {
+        findElementWithTimeoutUnmeasured(timeoutMs, filter, viewHierarchy, nearSide)
+    }
+
+    private fun findElementWithTimeoutUnmeasured(
+        timeoutMs: Long,
+        filter: ElementFilter,
+        viewHierarchy: ViewHierarchy?,
+        nearSide: NearSideSelector?,
     ): FindElementResult? {
         if (nearSide != null && viewHierarchy == null) {
             try {
@@ -530,8 +540,14 @@ class Maestro(
         appId: String? = null,
         waitToSettleTimeoutMs: Int? = null
     ): ViewHierarchy? {
-        return driver.waitForAppToSettle(initialHierarchy, appId, waitToSettleTimeoutMs)
+        return SettleStats.of(driver).phase(SettleStats.Phase.SETTLE) {
+            driver.waitForAppToSettle(initialHierarchy, appId, waitToSettleTimeoutMs)
+        }
     }
+
+    /** smithr#1246: per-command settle/find timings for this driver. */
+    val settleStats: SettleStats
+        get() = SettleStats.of(driver)
 
     fun inputText(text: String) {
         LOGGER.info("Inputting text: $text")

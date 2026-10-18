@@ -48,6 +48,7 @@ import maestro.utils.Metrics
 import maestro.utils.MetricsProvider
 import maestro.utils.NoopInsights
 import maestro.utils.ScreenshotUtils
+import maestro.utils.SettleStats
 import maestro.utils.TempFileHandler
 import maestro.nearside.NearSideSelector
 import okio.Sink
@@ -490,10 +491,21 @@ class IOSDriver(
 
     override fun waitForAppToSettle(initialHierarchy: ViewHierarchy?, appId: String?, timeoutMs: Int?): ViewHierarchy? {
         return metrics.measured("operation", mapOf("command" to "waitForAppToSettle", "appId" to appId.toString(), "timeoutMs" to timeoutMs.toString())) {
-            LOGGER.info("Waiting for animation to end with timeout $SCREEN_SETTLE_TIMEOUT_MS")
-            val didFinishOnTime = waitUntilScreenIsStatic(SCREEN_SETTLE_TIMEOUT_MS)
+            SettleStats.of(this).phase(SettleStats.Phase.SETTLE) {
+                LOGGER.info("Waiting for animation to end with timeout $SCREEN_SETTLE_TIMEOUT_MS")
+                val stats = SettleStats.of(this)
+                val staticCall = stats.newSettleCall()
+                val startMs = System.currentTimeMillis()
+                val didFinishOnTime = waitUntilScreenIsStatic(SCREEN_SETTLE_TIMEOUT_MS)
+                if (staticCall != null) {
+                    // smithr#1246: the screenshot phase, as its own settle record (no dumps)
+                    staticCall.ms = System.currentTimeMillis() - startMs
+                    staticCall.exit = if (didFinishOnTime) "static" else "not-static"
+                    stats.recordSettleCall(staticCall)
+                }
 
-            if (didFinishOnTime) null else ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+                if (didFinishOnTime) null else ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+            }
         }
     }
 
