@@ -23,6 +23,7 @@ enum Route: String, CaseIterable {
     case capabilities
     case find
     case waitUntil
+    case screenStatic
 
     func toHTTPRoute() -> HTTPRoute {
         return HTTPRoute(rawValue)

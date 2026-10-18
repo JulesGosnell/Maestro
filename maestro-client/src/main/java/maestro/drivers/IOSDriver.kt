@@ -47,6 +47,7 @@ import maestro.utils.MaestroTimer
 import maestro.utils.Metrics
 import maestro.utils.MetricsProvider
 import maestro.utils.NoopInsights
+import maestro.utils.ScreenStatic
 import maestro.utils.ScreenshotUtils
 import maestro.utils.SettleStats
 import maestro.utils.TempFileHandler
@@ -481,11 +482,49 @@ class IOSDriver(
 
     override fun waitUntilScreenIsStatic(timeoutMs: Long): Boolean {
         return metrics.measured("operation", mapOf("command" to "waitUntilScreenIsStatic", "timeoutMs" to timeoutMs.toString())) {
-             MaestroTimer.retryUntilTrue(timeoutMs) {
-                val isScreenStatic = isScreenStatic()
-
-                return@retryUntilTrue isScreenStatic
+            // smithr#1246 Phase C: measured as a `static` screen call; -Dmaestro.fastStatic=on runs
+            // the loop on the runner when it advertises `screenStatic` (upstream otherwise)
+            val stats = SettleStats.of(this)
+            val call = stats.newScreenCall("static")
+            val startMs = System.currentTimeMillis()
+            var result = false
+            try {
+                result = ScreenStatic.iosSettleStatic(
+                    timeoutMs = timeoutMs,
+                    fast = ScreenStatic.fastStaticEnabled(),
+                    runnerHasIt = ::runnerHasScreenStatic,
+                    runner = { t ->
+                        val r = runDeviceCall("screenStatic") { iosDevice.screenStatic(t) }
+                        ScreenStatic.RunnerAnswer(r.isScreenStatic, r.attempts, r.frames)
+                    },
+                    upstreamAttempt = { isScreenStatic() },
+                    call = call,
+                )
+                result
+            } finally {
+                if (call != null) {
+                    call.ms = System.currentTimeMillis() - startMs
+                    call.exit = if (result) "static" else "not-static"
+                    stats.recordScreenCall(call)
+                }
             }
+        }
+    }
+
+    // smithr#1246 Phase C: null until the runner has answered GET /capabilities (or 404'd)
+    private var screenStaticAdvertised: Boolean? = null
+
+    private fun runnerHasScreenStatic(): Boolean {
+        screenStaticAdvertised?.let { return it }
+        return try {
+            val capabilities = iosDevice.nearSideCapabilities()
+            ((capabilities?.screenStatic ?: 0) >= 1).also {
+                LOGGER.info("XCTest runner screenStatic: $it (capabilities $capabilities)")
+                screenStaticAdvertised = it
+            }
+        } catch (e: Exception) {
+            LOGGER.warn("Could not read the XCTest runner's capabilities; using the upstream static check", e)
+            false
         }
     }
 

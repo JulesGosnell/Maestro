@@ -42,6 +42,10 @@ class LocalIOSDevice(
         return xcTestDevice.nearSideWaitUntil(request)
     }
 
+    override fun screenStatic(timeoutMs: Long): xcuitest.api.ScreenStaticResponse {
+        return xcTestDevice.screenStatic(timeoutMs)
+    }
+
     override fun viewHierarchy(excludeKeyboardElements: Boolean): ViewHierarchy {
         var isViewHierarchyInProgress = true
         val future = executor.schedule(

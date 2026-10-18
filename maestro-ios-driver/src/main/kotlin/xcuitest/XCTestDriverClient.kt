@@ -207,6 +207,12 @@ class XCTestDriverClient(
         return mapper.readValue(response, NearSideWaitUntilResponse::class.java)
     }
 
+    /** smithr#1246 Phase C: only called when [nearSideCapabilities] advertised `screenStatic`. */
+    fun screenStatic(timeoutMs: Long): ScreenStaticResponse {
+        val response = executeJsonRequest("screenStatic", ScreenStaticRequest(timeoutMs))
+        return mapper.readValue(response, ScreenStaticResponse::class.java)
+    }
+
     fun close() {
         installer.close()
     }

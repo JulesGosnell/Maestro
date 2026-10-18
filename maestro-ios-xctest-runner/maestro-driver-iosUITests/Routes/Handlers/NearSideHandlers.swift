@@ -167,6 +167,8 @@ struct CapabilitiesHandler: HTTPHandler {
             "nearSide": NearSide.version,
             "ops": NearSide.ops,
             "selectorFields": NearSide.selectorFields,
+            // smithr#1246 Phase C: POST /screenStatic (ScreenDiffHandler.swift)
+            "screenStatic": ScreenStatic.version,
         ])
     }
 }

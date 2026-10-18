@@ -120,25 +120,55 @@ class ScreenshotUtils {
         }
 
         fun waitUntilScreenIsStatic(timeoutMs: Long, threshold: Double, driver: Driver): Boolean {
-            return MaestroTimer.retryUntilTrue(timeoutMs) {
-                val startScreenshot: BufferedImage? = tryTakingScreenshot(driver)
-                val endScreenshot: BufferedImage? = tryTakingScreenshot(driver)
-
-                if (startScreenshot != null &&
-                    endScreenshot != null &&
-                    startScreenshot.width == endScreenshot.width &&
-                    startScreenshot.height == endScreenshot.height
-                ) {
-                    val imageDiff = ImageComparison(
-                        startScreenshot,
-                        endScreenshot
-                    ).compareImages().differencePercent
-
-                    return@retryUntilTrue imageDiff <= threshold
+            // smithr#1246 Phase C: measured as an `anim` screen call; -Dmaestro.fastAnim=on reuses
+            // each screenshot as the next comparison's first and decides with ScreenStatic.sameScreen
+            val stats = SettleStats.of(driver)
+            val call = stats.newScreenCall("anim")
+            val startMs = System.currentTimeMillis()
+            val fast = ScreenStatic.fastAnimEnabled()
+            call?.path = if (fast) "fast" else "upstream"
+            var result = false
+            try {
+                result = if (fast) {
+                    ScreenStatic.waitUntilStatic(
+                        timeoutMs = timeoutMs,
+                        fast = true,
+                        clock = System::currentTimeMillis,
+                        capture = { tryTakingScreenshotFrame(driver) },
+                        same = { a, b -> ScreenStatic.sameScreen(a, b, threshold, call) },
+                        call = call,
+                    )
+                } else {
+                    // upstream: two fresh screenshots per attempt, ImageComparison on both
+                    ScreenStatic.waitUntilStatic(
+                        timeoutMs = timeoutMs,
+                        fast = false,
+                        clock = System::currentTimeMillis,
+                        capture = { tryTakingScreenshot(driver) },
+                        same = { start: BufferedImage, end: BufferedImage ->
+                            start.width == end.width &&
+                                start.height == end.height &&
+                                ImageComparison(start, end).compareImages().differencePercent <= threshold
+                        },
+                        call = call,
+                    )
                 }
-
-                return@retryUntilTrue false
+                return result
+            } finally {
+                if (call != null) {
+                    call.ms = System.currentTimeMillis() - startMs
+                    call.exit = if (result) "static" else "timeout"
+                    stats.recordScreenCall(call)
+                }
             }
+        }
+
+        /** fastAnim: a screenshot kept as its bytes, decoded only if a comparison needs pixels. */
+        private fun tryTakingScreenshotFrame(driver: Driver): ScreenStatic.Frame? = try {
+            ScreenStatic.Frame(takeScreenshot(true, driver)) { ImageIO.read(it.inputStream()) }
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to take screenshot", e)
+            null
         }
 
         private fun viewHierarchy(driver: Driver, call: SettleStats.SettleCall?): ViewHierarchy {

@@ -33,3 +33,74 @@ struct IsScreenStaticHandler: HTTPHandler {
         }
     }
 }
+
+// smithr#1246 Phase C: the settle's screen-static loop, on the runner.
+//
+// POST /screenStatic {timeoutMs} -> {isScreenStatic, attempts, frames, elapsedMs}
+//
+// The same verdict as GET /isScreenStatic (two consecutive screenshots, equal or not), reached
+// without its two costs: the PNG encode of every screenshot (compared here as raw pixels — equal
+// PNGs are equal pixels), and a fresh pair of screenshots per host round trip (here each new
+// screenshot is compared with the previous one, until two are equal or timeoutMs has elapsed).
+// At least one comparison is made. Additive: the host calls it only when GET /capabilities
+// advertises `screenStatic`, and only under -Dmaestro.fastStatic=on.
+enum ScreenStatic {
+    static let version = 1
+    static let maxTimeoutMs = 30_000
+}
+
+/// The screenshot's pixels, as the bytes of its CGImage (format included, so two frames compare
+/// equal only if their layout and their pixels are the same).
+private struct ScreenFrame: Equatable {
+    let width: Int
+    let height: Int
+    let bytesPerRow: Int
+    let bitmapInfo: UInt32
+    let pixels: Data
+
+    static func capture() -> ScreenFrame? {
+        let image = XCUIScreen.main.screenshot().image
+        guard let cg = image.cgImage, let data = cg.dataProvider?.data else { return nil }
+        return ScreenFrame(width: cg.width, height: cg.height, bytesPerRow: cg.bytesPerRow,
+                           bitmapInfo: cg.bitmapInfo.rawValue, pixels: data as Data)
+    }
+}
+
+@MainActor
+struct ScreenStaticHandler: HTTPHandler {
+    func handleRequest(_ request: FlyingFox.HTTPRequest) async throws -> FlyingFox.HTTPResponse {
+        let start = DispatchTime.now()
+        func elapsedMs() -> Int { Int((DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000) }
+        do {
+            let data = try await request.bodyData
+            let body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+            guard let requested = body["timeoutMs"] as? Int, requested >= 0 else {
+                return AppError(type: .precondition, message: "timeoutMs is required").httpResponse
+            }
+            let timeoutMs = min(requested, ScreenStatic.maxTimeoutMs)
+
+            let (isStatic, attempts, frames) = try catchingObjCException { () -> (Bool, Int, Int) in
+                var previous = ScreenFrame.capture()
+                var attempts = 0
+                var frames = 1
+                repeat {
+                    let current = ScreenFrame.capture()
+                    frames += 1
+                    if let p = previous, let c = current {
+                        attempts += 1
+                        if p == c { return (true, attempts, frames) }
+                    }
+                    previous = current
+                } while elapsedMs() < timeoutMs
+                return (false, attempts, frames)
+            }
+
+            let response: [String: Any] = [
+                "isScreenStatic": isStatic, "attempts": attempts, "frames": frames, "elapsedMs": elapsedMs(),
+            ]
+            return HTTPResponse(statusCode: .ok, body: try JSONSerialization.data(withJSONObject: response))
+        } catch let error {
+            return AppError(message: "screenStatic request failed. Error \(error.localizedDescription)").httpResponse
+        }
+    }
+}

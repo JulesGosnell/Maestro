@@ -46,6 +46,8 @@ class RouteHandlerFactory {
             return FindHandler()
         case .waitUntil:
             return WaitUntilHandler()
+        case .screenStatic:
+            return ScreenStaticHandler()
         }
     }
 }

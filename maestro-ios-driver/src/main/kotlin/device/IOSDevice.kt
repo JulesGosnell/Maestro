@@ -46,6 +46,11 @@ interface IOSDevice : AutoCloseable {
         throw UnsupportedOperationException("near-side lookups are not supported by ${this::class.simpleName}")
     }
 
+    /** smithr#1246 Phase C: only called when [nearSideCapabilities] advertised `screenStatic`. */
+    fun screenStatic(timeoutMs: Long): xcuitest.api.ScreenStaticResponse {
+        throw UnsupportedOperationException("screenStatic is not supported by ${this::class.simpleName}")
+    }
+
     fun tap(x: Int, y: Int)
 
     fun longPress(x: Int, y: Int, durationMs: Long)
