@@ -58,7 +58,10 @@ object BringupDeadline {
         val start = System.nanoTime()
         val future = workers.submit<T> { block() }
         try {
-            return future.get(timeoutMs, TimeUnit.MILLISECONDS)
+            val value = future.get(timeoutMs, TimeUnit.MILLISECONDS)
+            // One line per step: the per-step margin against its bound, readable from maestro.log.
+            logger.info("$phase: step '$step' took ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)} ms (bound ${timeoutMs} ms)")
+            return value
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         } catch (e: TimeoutException) {
