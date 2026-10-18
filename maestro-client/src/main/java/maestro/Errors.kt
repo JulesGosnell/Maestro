@@ -70,4 +70,15 @@ sealed class MaestroException(override val message: String, cause: Throwable? = 
 sealed class MaestroDriverStartupException(override val message: String, cause: Throwable? = null): RuntimeException(message, cause) {
     class AndroidDriverTimeoutException(message: String, cause: Throwable? = null): MaestroDriverStartupException(message, cause)
     class AndroidInstrumentationSetupFailure(message: String, cause: Throwable? = null): MaestroDriverStartupException(message, cause)
+
+    /** A bring-up step blocked past its deadline (smithr#1245). Deliberately NOT an IOException, so the
+     *  catch-IOException-and-carry-on blocks around uninstall/package checks cannot swallow it. */
+    class BringupStepTimeoutException(
+        val phase: String,
+        val step: String,
+        val timeoutMs: Long,
+        val elapsedMs: Long,
+    ): MaestroDriverStartupException(
+        "$phase: step '$step' exceeded ${if (timeoutMs % 1000 == 0L) "${timeoutMs / 1000}s" else "${timeoutMs}ms"} (gave up after ${elapsedMs} ms)"
+    )
 }
