@@ -53,6 +53,10 @@ class XCTestIOSDevice(
         return execute { client.nearSideWaitUntil(request) }
     }
 
+    override fun screenStatic(timeoutMs: Long): xcuitest.api.ScreenStaticResponse {
+        return execute { client.screenStatic(timeoutMs) }
+    }
+
     override fun tap(x: Int, y: Int) {
         execute {
             client.tap(

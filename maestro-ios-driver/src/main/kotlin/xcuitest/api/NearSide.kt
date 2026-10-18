@@ -11,6 +11,8 @@ data class NearSideCapabilities(
     val nearSide: Int = 0,
     val ops: List<String> = emptyList(),
     val selectorFields: List<String> = emptyList(),
+    // smithr#1246 Phase C: >= 1 when the runner answers POST /screenStatic
+    val screenStatic: Int = 0,
 )
 
 // Absent fields are left out: the runner refuses a field it does not know, and a null is not "any".

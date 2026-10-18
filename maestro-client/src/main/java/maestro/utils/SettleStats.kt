@@ -45,6 +45,41 @@ class SettleStats {
         }
     }
 
+    /**
+     * smithr#1246 Phase C: one screen-static check. `anim` = waitForAnimationToEnd's screenshot
+     * loop (ScreenshotUtils); `static` = the iOS settle's runner check (IOSDriver). An attempt is
+     * one comparison; frames = screenshots taken (on the runner, for `static`). Measure only.
+     */
+    class ScreenCall(val kind: String) {
+        var attempts = 0
+        var frames = 0
+        var byteEqual = 0
+        var pixelEqual = 0
+        var fullCompares = 0
+        var ms = 0L
+        var exit = "error"
+        var path = "upstream"
+
+        fun toMap(): Map<String, Any> {
+            val m = linkedMapOf<String, Any>(
+                "kind" to kind, "path" to path, "ms" to ms, "exit" to exit,
+                "attempts" to attempts, "frames" to frames,
+            )
+            if (byteEqual + pixelEqual + fullCompares > 0) {
+                m["byteEq"] = byteEqual; m["pixelEq"] = pixelEqual; m["fullCmp"] = fullCompares
+            }
+            return m
+        }
+    }
+
+    class ScreenAggregate {
+        var calls = 0
+        var ms = 0L
+        val exits = sortedMapOf<String, Int>()
+        val attempts = sortedMapOf<Int, Int>()
+        val paths = sortedMapOf<String, Int>()
+    }
+
     data class Mismatch(val kind: String, val attrs: List<String> = emptyList()) {
         fun toMap(): Map<String, Any> =
             if (attrs.isEmpty()) mapOf("kind" to kind) else mapOf("kind" to kind, "attrs" to attrs)
@@ -63,6 +98,9 @@ class SettleStats {
         var settleMs = 0L
         var findMs = 0L
         val settles = mutableListOf<SettleCall>()
+        var animMs = 0L
+        var staticMs = 0L
+        val screens = mutableListOf<ScreenCall>()
     }
 
     private class PhaseFrame(val phase: Phase, startMs: Long) : Frame(startMs)
@@ -72,6 +110,8 @@ class SettleStats {
         var ms = 0L
         var settleMs = 0L
         var findMs = 0L
+        var animMs = 0L
+        var staticMs = 0L
     }
 
     // Guarded by `this`.
@@ -84,6 +124,7 @@ class SettleStats {
     private val attrCounts = sortedMapOf<String, Int>()
     private var settleCalls = 0
     private var settleCallMs = 0L
+    private val screenAggregates = sortedMapOf<String, ScreenAggregate>()
 
     // ---- command frames (Orchestra) ----
 
@@ -111,6 +152,8 @@ class SettleStats {
             agg.ms += self
             agg.settleMs += frame.settleMs
             agg.findMs += frame.findMs
+            agg.animMs += frame.animMs
+            agg.staticMs += frame.staticMs
             val m = linkedMapOf<String, Any>(
                 "cmd" to frame.type,
                 "depth" to frame.depth,
@@ -120,6 +163,10 @@ class SettleStats {
                 "find" to frame.findMs,
                 "other" to (self - frame.settleMs - frame.findMs),
                 "settles" to frame.settles.map { it.toMap() },
+                // smithr#1246 Phase C: sub-measures — anim is inside `other`, static inside `settle`
+                "anim" to frame.animMs,
+                "static" to frame.staticMs,
+                "screens" to frame.screens.map { it.toMap() },
             )
             line = try {
                 LOG_PREFIX + MAPPER.writeValueAsString(m)
@@ -190,6 +237,28 @@ class SettleStats {
         }
     }
 
+    // ---- screen-static checks (ScreenshotUtils / IOSDriver) ----
+
+    fun newScreenCall(kind: String): ScreenCall? = if (enabled()) ScreenCall(kind) else null
+
+    fun recordScreenCall(call: ScreenCall?) {
+        call ?: return
+        synchronized(this) {
+            val agg = screenAggregates.getOrPut(call.kind) { ScreenAggregate() }
+            agg.calls++
+            agg.ms += call.ms
+            agg.exits.merge(call.exit, 1, Int::plus)
+            agg.attempts.merge(call.attempts, 1, Int::plus)
+            agg.paths.merge(call.path, 1, Int::plus)
+            val cmd = stack.lastOrNull { it is CommandFrame } as? CommandFrame ?: return
+            cmd.screens.add(call)
+            when (call.kind) {
+                "anim" -> cmd.animMs += call.ms
+                "static" -> cmd.staticMs += call.ms
+            }
+        }
+    }
+
     // ---- flow summary ----
 
     fun reset() {
@@ -203,6 +272,7 @@ class SettleStats {
             attrCounts.clear()
             settleCalls = 0
             settleCallMs = 0
+            screenAggregates.clear()
         }
     }
 
@@ -235,6 +305,7 @@ class SettleStats {
             commands[type] = linkedMapOf(
                 "count" to a.count, "ms" to a.ms, "settle" to a.settleMs, "find" to a.findMs,
                 "other" to (a.ms - a.settleMs - a.findMs),
+                "anim" to a.animMs, "static" to a.staticMs,
             )
         }
         val m = linkedMapOf<String, Any?>(
@@ -251,6 +322,12 @@ class SettleStats {
                 "mismatch" to mismatchCounts.toMap(),
                 "attrs" to attrCounts.toMap(),
             ),
+            "screens" to screenAggregates.mapValues { (_, a) ->
+                linkedMapOf(
+                    "calls" to a.calls, "ms" to a.ms, "exit" to a.exits.toMap(),
+                    "attempts" to a.attempts.mapKeys { it.key.toString() }, "path" to a.paths.toMap(),
+                )
+            },
         )
         return SUMMARY_PREFIX + MAPPER.writeValueAsString(m)
     }
