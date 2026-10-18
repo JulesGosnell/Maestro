@@ -130,9 +130,11 @@ class AndroidDriver(
 
         open = true
         while (System.currentTimeMillis() - startTime < getStartupTimeout()) {
-            instrumentationSession = dadb.openShell(instrumentationCommand)
-
-            if (instrumentationSession.successfullyStarted()) {
+            val started = bringupStep("start instrumentation", BringupDeadline.instrumentationTimeoutMs()) {
+                instrumentationSession = dadb.openShell(instrumentationCommand)
+                instrumentationSession.successfullyStarted()
+            }
+            if (started) {
                 return
             }
 
@@ -143,7 +145,9 @@ class AndroidDriver(
     }
 
     private fun getDeviceApiLevel(): Int {
-        val response = dadb.openShell("getprop ro.build.version.sdk").readAll()
+        val response = bringupStep("read device API level", BringupDeadline.shellTimeoutMs()) {
+            dadb.openShell("getprop ro.build.version.sdk").readAll()
+        }
         if (response.exitCode != 0) {
             throw IOException("Failed to get device API level: ${response.errorOutput}")
         }
@@ -154,20 +158,24 @@ class AndroidDriver(
     private fun allocateForwarder() {
         portForwarder?.close()
 
-        portForwarder = dadb.tcpForward(
-            hostPort,
-            hostPort
-        )
+        portForwarder = bringupStep("forward tcp:$hostPort", BringupDeadline.connectTimeoutMs()) {
+            dadb.tcpForward(
+                hostPort,
+                hostPort
+            )
+        }
     }
 
     private fun awaitLaunch() {
         val startTime = System.currentTimeMillis()
 
         while (System.currentTimeMillis() - startTime < getStartupTimeout()) {
-            runCatching {
-                dadb.open("tcp:$hostPort").close()
-                return
+            // The deadline sits OUTSIDE runCatching, so a blocked open() fails the bring-up instead of
+            // being swallowed as one more failed attempt.
+            val connected = bringupStep("connect to maestro-server on tcp:$hostPort", BringupDeadline.connectTimeoutMs()) {
+                runCatching { dadb.open("tcp:$hostPort").close() }.isSuccess
             }
+            if (connected) return
             Thread.sleep(100)
         }
 
@@ -1213,7 +1221,7 @@ class AndroidDriver(
                 bufferedSink.flush()
             }
 
-            install(maestroAppApk)
+            install(maestroAppApk, "maestro-app")
             if (!isPackageInstalled("dev.mobile.maestro")) {
                 throw IllegalStateException("dev.mobile.maestro was not installed")
             }
@@ -1236,7 +1244,7 @@ class AndroidDriver(
             bufferedSink.flush()
         }
 
-        install(maestroServerApk)
+        install(maestroServerApk, "maestro-server")
         if (!isPackageInstalled("dev.mobile.maestro.test")) {
             throw IllegalStateException("dev.mobile.maestro.test was not installed")
         }
@@ -1289,9 +1297,11 @@ class AndroidDriver(
         uninstallMaestroServerApp()
     }
 
-    private fun install(apkFile: File) {
+    private fun install(apkFile: File, label: String) {
         try {
-            dadb.install(apkFile)
+            bringupStep("install $label", BringupDeadline.installTimeoutMs()) {
+                dadb.install(apkFile)
+            }
         } catch (installError: IOException) {
             throw IOException("Failed to install apk " + apkFile + ": " + installError.message, installError)
         }
@@ -1299,7 +1309,9 @@ class AndroidDriver(
 
     private fun uninstall(packageName: String) {
         try {
-            dadb.uninstall(packageName)
+            bringupStep("uninstall $packageName", BringupDeadline.shellTimeoutMs()) {
+                dadb.uninstall(packageName)
+            }
         } catch (error: IOException) {
             throw IOException("Failed to uninstall package " + packageName + ": " + error.message, error)
         }
@@ -1307,7 +1319,9 @@ class AndroidDriver(
 
     private fun isPackageInstalled(packageName: String): Boolean {
         try {
-            val output: String = shell("pm list packages --user 0 $packageName")
+            val output: String = bringupStep("check $packageName installed", BringupDeadline.shellTimeoutMs()) {
+                shell("pm list packages --user 0 $packageName")
+            }
             return output.split("\n".toRegex())
                 .map { line -> line.split(":".toRegex()) }
                 .filter { parts -> parts.size == 2 }
@@ -1332,6 +1346,16 @@ class AndroidDriver(
         }
         return response.output
     }
+
+    /** smithr#1245: bound one blocking dadb call; on expiry close the connection so it cannot hang on. */
+    private fun <T> bringupStep(step: String, timeoutMs: Long, block: () -> T): T =
+        BringupDeadline.withDeadline(
+            phase = "Android driver bring-up",
+            step = step,
+            timeoutMs = timeoutMs,
+            onTimeout = { dadb.close() },
+            block = block,
+        )
 
     private fun getStartupTimeout(): Long = runCatching {
         System.getenv(MAESTRO_DRIVER_STARTUP_TIMEOUT).toLong()

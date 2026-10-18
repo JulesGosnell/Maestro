@@ -6,6 +6,7 @@ import maestro.device.util.AndroidEnvUtils
 import maestro.device.util.AvdDevice
 import maestro.device.util.PrintUtils
 import maestro.drivers.AndroidDriver
+import maestro.drivers.BringupDeadline
 import maestro.drivers.CdpWebDriver
 import maestro.utils.MaestroTimer
 import maestro.utils.TempFileHandler
@@ -198,10 +199,22 @@ object DeviceService {
         // Fetch AVD info once (model + os) to avoid repeated avdmanager calls
         val avdInfoList = fetchAndroidAvdInfo()
 
-        val connected = runCatching {
+        // smithr#1245: Dadb.list and the per-device getprop block forever on a device that accepts and
+        // never answers. The outer deadline sits OUTSIDE runCatching so a hang is reported, not
+        // swallowed into "no devices"; the inner one drops only the wedged device's AVD name.
+        val connected = BringupDeadline.withDeadline(
+            phase = "Android device discovery",
+            step = "list android devices on $host",
+            timeoutMs = BringupDeadline.deviceListTimeoutMs(),
+        ) { runCatching {
             Dadb.list(host = host).map { dadb ->
                 val avdName = runCatching {
-                    dadb.shell("getprop ro.kernel.qemu").output.trim().let { qemuProp ->
+                    BringupDeadline.withDeadline(
+                        phase = "Android device discovery",
+                        step = "read ro.kernel.qemu on $dadb",
+                        timeoutMs = BringupDeadline.shellTimeoutMs(),
+                        onTimeout = { dadb.close() },
+                    ) { dadb.shell("getprop ro.kernel.qemu") }.output.trim().let { qemuProp ->
                         if (qemuProp == "1") {
                             val avdNameResult = ProcessBuilder("adb", "-s", dadb.toString(), "emu", "avd", "name")
                                 .redirectErrorStream(true)
@@ -232,7 +245,7 @@ object DeviceService {
                     ),
                 )
             }
-        }.getOrNull() ?: emptyList()
+        }.getOrNull() ?: emptyList() }
 
         // Note that there is a possibility that AVD is actually already connected and is present in
         // connectedDevices.
