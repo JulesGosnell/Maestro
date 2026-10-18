@@ -20,7 +20,7 @@ internal class FastSettleTest {
         var fallbacks = 0
         val log = mutableListOf<String>()
 
-        fun run(fast: Boolean): String = FastSettle.windowSettle(
+        fun run(fast: Boolean, stopAfterSettle: Boolean = false): String = FastSettle.windowSettle(
             windowMs = 750,
             fast = fast,
             clock = { now },
@@ -33,6 +33,7 @@ internal class FastSettleTest {
             },
             settle = { settles++; now += 250; log += "settle"; "settled-$settles" },
             fallback = { fallbacks++; now += 250; log += "fallback"; "fallback" },
+            stopAfterSettle = stopAfterSettle,
         )
     }
 
@@ -80,6 +81,36 @@ internal class FastSettleTest {
         assertThat(s.run(fast = true)).isEqualTo("settled-3")
         assertThat(s.settles).isEqualTo(3)
         assertThat(s.polls).isEqualTo(3)
+    }
+
+    @Test
+    fun `fastWindow - an update is settled and the loop ends, without the trailing poll`() {
+        val s = Script(updating, quiet)
+        assertThat(s.run(fast = false, stopAfterSettle = true)).isEqualTo("settled-1")
+        assertThat(s.log).containsExactly("poll=true", "settle").inOrder()
+        assertThat(s.now).isEqualTo(270)
+    }
+
+    @Test
+    fun `fastWindow off - the same script polls again after the settle (upstream)`() {
+        val s = Script(updating, quiet)
+        assertThat(s.run(fast = false)).isEqualTo("settled-1")
+        assertThat(s.log).containsExactly("poll=true", "settle", "poll=false").inOrder()
+    }
+
+    @Test
+    fun `fastWindow - a quiet screen is untouched - polls to the deadline, then the fallback settle`() {
+        val s = Script(quiet)
+        assertThat(s.run(fast = false, stopAfterSettle = true)).isEqualTo("fallback")
+        assertThat(s.log).containsExactly("poll=false", "poll=false", "fallback").inOrder()
+    }
+
+    @Test
+    fun `fastWindow is read from -Dmaestro_fastWindow and is off by default`() {
+        assertThat(FastSettle.windowEnabled()).isFalse()
+        System.setProperty(FastSettle.WINDOW_PROPERTY, "on")
+        assertThat(FastSettle.windowEnabled()).isTrue()
+        System.clearProperty(FastSettle.WINDOW_PROPERTY)
     }
 
     @Test

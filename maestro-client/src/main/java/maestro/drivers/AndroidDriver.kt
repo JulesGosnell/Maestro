@@ -794,6 +794,7 @@ class AndroidDriver(
                 }
             },
             fallback = { ScreenshotUtils.waitForAppToSettle(initialHierarchy, this) },
+            stopAfterSettle = FastSettle.windowEnabled(),
         )
     }
 

@@ -25,6 +25,18 @@ object FastSettle {
     fun enabled(): Boolean = System.getProperty(PROPERTY)?.trim()?.lowercase() == "on"
 
     /**
+     * smithr#1246 Phase C: `-Dmaestro.fastWindow=on` ends the window loop as soon as a hierarchy
+     * settle has returned inside it. On artha's RN app the first poll usually SEES an update (the
+     * previous command's tail), so fastSettle's quiet-poll exit never fires (A/B, 229 flows: 0 ms);
+     * the loop then settles and spends the rest of the 750 ms window on one more poll. A settle
+     * that returned early ended on two equal dumps — the same evidence Maestro accepts, alone,
+     * after every tap (hierarchyBasedTap) — so that last poll is dropped.
+     */
+    const val WINDOW_PROPERTY = "maestro.fastWindow"
+
+    fun windowEnabled(): Boolean = System.getProperty(WINDOW_PROPERTY)?.trim()?.lowercase() == "on"
+
+    /**
      * Maestro.screenshotBasedTap compares a before-tap screenshot only to choose between
      * "proceed" and "nothing changed, try again"; with a single attempt both end the loop, so
      * the screenshot (a full device round trip, ~0.2-0.5 s on iOS) cannot change the outcome.
@@ -48,6 +60,7 @@ object FastSettle {
         poll: () -> Boolean,
         settle: () -> H,
         fallback: () -> H,
+        stopAfterSettle: Boolean = false,
     ): H {
         val endTime = clock() + windowMs
         var hierarchy: H? = null
@@ -55,6 +68,7 @@ object FastSettle {
             val pollStart = clock()
             if (poll()) {
                 hierarchy = settle()
+                if (stopAfterSettle) break
             } else if (fast && clock() - pollStart >= QUIET_POLL_MIN_MS) {
                 break
             }
