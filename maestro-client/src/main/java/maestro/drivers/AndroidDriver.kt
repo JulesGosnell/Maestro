@@ -44,6 +44,7 @@ import maestro.utils.MaestroTimer
 import maestro.utils.Metrics
 import maestro.utils.MetricsProvider
 import maestro.utils.ScreenshotUtils
+import maestro.utils.FastSettle
 import maestro.utils.SettleStats
 import maestro.utils.StringUtils.toRegexSafe
 import maestro_android.*
@@ -774,21 +775,26 @@ class AndroidDriver(
         initialHierarchy: ViewHierarchy?,
         timeoutMs: Int? = null
     ): ViewHierarchy {
-        val endTime = System.currentTimeMillis() + WINDOW_UPDATE_TIMEOUT_MS
-        var hierarchy: ViewHierarchy? = null
-        do {
-            runDeviceCall("isWindowUpdating") {
-                val windowUpdating = blockingStubWithTimeout.isWindowUpdating(checkWindowUpdatingRequest {
-                    this.appId = appId
-                }).isWindowUpdating
-
-                if (windowUpdating) {
-                    hierarchy = ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+        // smithr#1246: the upstream loop, extracted so -Dmaestro.fastSettle=on can end it on the
+        // first quiet poll; with it off the sequence of device calls is unchanged.
+        return FastSettle.windowSettle(
+            windowMs = WINDOW_UPDATE_TIMEOUT_MS.toLong(),
+            fast = FastSettle.enabled(),
+            clock = System::currentTimeMillis,
+            poll = {
+                runDeviceCall("isWindowUpdating") {
+                    blockingStubWithTimeout.isWindowUpdating(checkWindowUpdatingRequest {
+                        this.appId = appId
+                    }).isWindowUpdating
                 }
-            }
-        } while (System.currentTimeMillis() < endTime)
-
-        return hierarchy ?: ScreenshotUtils.waitForAppToSettle(initialHierarchy, this)
+            },
+            settle = {
+                runDeviceCall("isWindowUpdating") {
+                    ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
+                }
+            },
+            fallback = { ScreenshotUtils.waitForAppToSettle(initialHierarchy, this) },
+        )
     }
 
     override fun waitUntilScreenIsStatic(timeoutMs: Long): Boolean {

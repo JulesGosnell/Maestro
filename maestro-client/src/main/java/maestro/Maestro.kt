@@ -26,6 +26,7 @@ import maestro.drivers.CdpWebDriver
 import maestro.nearside.NearSideSelector
 import maestro.utils.MaestroTimer
 import maestro.utils.ScreenshotUtils
+import maestro.utils.FastSettle
 import maestro.utils.SettleStats
 import maestro.utils.SocketUtils
 import okio.Buffer
@@ -338,9 +339,13 @@ class Maestro(
         LOGGER.info("Try tapping at ($x, $y) using hierarchy based logic for wait")
 
         val hierarchyBeforeTap = initialHierarchy ?: viewHierarchy()
-        val screenshotBeforeTap: BufferedImage? = ScreenshotUtils.tryTakingScreenshot(driver)
-
         val retries = getNumberOfRetries(retryIfNoChange)
+        // smithr#1246: the before-tap screenshot only decides between "proceed" and "nothing
+        // changed"; with one attempt both end the loop, so fastSettle does not take it.
+        val screenshotBeforeTap: BufferedImage? =
+            if (FastSettle.skipBeforeTapScreenshot(retries)) null
+            else ScreenshotUtils.tryTakingScreenshot(driver)
+
         repeat(retries) {
             if (longPress) {
                 driver.longPress(Point(x, y))
