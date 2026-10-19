@@ -37,9 +37,29 @@ struct XCTestHTTPServer {
         
         for route in Route.allCases {
             let handler = await RouteHandlerFactory.createRouteHandler(route: route)
-            await server.appendRoute(route.toHTTPRoute(), to: handler)
+            await server.appendRoute(route.toHTTPRoute(), to: IssueGuardedHandler(route: route, inner: handler))
         }
         
         try await server.run()
+    }
+}
+
+/// artha#5055: a request during which XCTest recorded an issue answers an error, so the
+/// caller does not take a degraded answer (e.g. an empty screenshot) for a good one. The issue
+/// itself was swallowed by `maestro_driver_iosUITests.record(_:)`, so the server keeps
+/// serving: the NEXT request is answered normally.
+///
+/// Attribution is by time window: requests that overlap can each see the other's issue.
+struct IssueGuardedHandler: HTTPHandler {
+    let route: Route
+    let inner: HTTPHandler
+
+    func handleRequest(_ request: HTTPRequest) async throws -> HTTPResponse {
+        let mark = DriverIssues.count
+        let response = try await inner.handleRequest(request)
+        let issues = DriverIssues.since(mark)
+        guard !issues.isEmpty else { return response }
+        NSLog("%@", "[DriverIssues] /\(route.rawValue) recorded \(issues.count) XCTest issue(s); answering an error instead of \(response.statusCode.code)")
+        return AppError(message: "XCTest recorded an issue during /\(route.rawValue): \(issues.joined(separator: " | "))").httpResponse
     }
 }
