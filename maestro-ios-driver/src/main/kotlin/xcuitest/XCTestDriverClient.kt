@@ -289,6 +289,24 @@ class XCTestDriverClient(
         }
     }
 
+    /**
+     * Maestro#3: the ONE place a 500 "XCTest recorded an issue during /<endpoint>" (artha#5055)
+     * is classified. On a read-only probe in [POLLED_READ_ONLY_PROBES] it is a transient MISS:
+     * the probe's natural negative answer when it has a safe one, else a
+     * [XCUITestServerError.TransientIssue] for the polling caller to absorb. On anything else
+     * (actions, and any 500 without the marker) this returns null and the 500 stays fatal.
+     * Called only where the 500 would otherwise be an UnknownFailure: timeouts, 4xx and app
+     * crashes keep their own classification.
+     */
+    private fun transientIssueMiss(code: Int, pathString: String, responseBodyAsString: String): String? {
+        if (code != 500 || XCTEST_ISSUE_MARKER !in responseBodyAsString) return null
+        if (pathString !in POLLED_READ_ONLY_PROBES) return null
+
+        logger.warn("[DriverIssues] absorbed transient issue on /$pathString as a miss; the caller keeps polling. body: $responseBodyAsString")
+        return POLLED_READ_ONLY_PROBES.getValue(pathString)
+            ?: throw XCUITestServerError.TransientIssue(pathString, responseBodyAsString)
+    }
+
     private fun handleExceptions(
         code: Int,
         pathString: String,
@@ -337,6 +355,8 @@ class XCTestDriverClient(
                 )
             }
             else -> {
+                // Maestro#3: only what would be an UnknownFailure can be a miss; a crash stays a crash
+                transientIssueMiss(code, pathString, responseBodyAsString)?.let { return it }
                 logger.error("Request for $pathString failed, because of unknown reason, body: $responseBodyAsString")
                 throw XCUITestServerError.UnknownFailure(
                     "Request for $pathString failed, code: ${code}, body: $responseBodyAsString"
@@ -345,4 +365,24 @@ class XCTestDriverClient(
         }
     }
 
+    companion object {
+        /** The runner's 500 body for a request during which XCTest recorded an issue (artha#5055). */
+        const val XCTEST_ISSUE_MARKER = "XCTest recorded an issue"
+
+        /**
+         * Maestro#3: idempotent, read-only probes that their callers ALREADY poll inside a timeout,
+         * each mapped to its miss. A JSON value is the probe's own negative answer, which the
+         * caller already handles as "not yet"; null means no answer is safe (a lookup answered
+         * "not found" would pass an assertNotVisible), so the miss is a TransientIssue that only
+         * the polling caller absorbs. Actions (tap, inputText, swipe, launchApp, ...) are never here.
+         */
+        val POLLED_READ_ONLY_PROBES: Map<String, String?> = mapOf(
+            // the settle loop (ScreenStatic.iosSettleStatic) asks again until static or its timeout
+            "isScreenStatic" to """{"isScreenStatic":false}""",
+            // the near-side lookup; Maestro.findElementWithTimeout falls back to hierarchy polling
+            "waitUntil" to null,
+            // the hierarchy poll in Maestro.findElementWithTimeout asks again within its timeout
+            "viewHierarchy" to null,
+        )
+    }
 }
