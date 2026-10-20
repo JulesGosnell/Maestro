@@ -223,7 +223,11 @@ internal class ScreenStaticTest {
 
     // ---------------------------------------------------------------- iOS settle static
 
-    private class Runner(val answer: ScreenStatic.RunnerAnswer? = null, val advertised: Boolean = true) {
+    private class Runner(
+        val answer: ScreenStatic.RunnerAnswer? = null,
+        val advertised: Boolean = true,
+        val failure: () -> Throwable = { RuntimeException("runner failed") },
+    ) {
         var runnerCalls = 0
         var upstreamCalls = 0
         var probes = 0
@@ -233,7 +237,7 @@ internal class ScreenStaticTest {
                 timeoutMs = 3000,
                 fast = fast,
                 runnerHasIt = { probes++; advertised },
-                runner = { runnerCalls++; answer ?: throw RuntimeException("runner failed") },
+                runner = { runnerCalls++; answer ?: throw failure() },
                 upstreamAttempt = { upstreamResults.getOrElse(upstreamCalls++) { upstreamResults.last() } },
                 call = call,
             )
@@ -271,6 +275,19 @@ internal class ScreenStaticTest {
     fun `static on, the runner call fails - the upstream loop runs instead`() {
         val call = SettleStats.ScreenCall("static")
         val r = Runner(answer = null)
+        assertThat(r.run(fast = true, upstreamResults = listOf(false, true), call = call)).isTrue()
+        assertThat(r.runnerCalls).isEqualTo(1)
+        assertThat(r.upstreamCalls).isEqualTo(2)
+        assertThat(call.path).isEqualTo("runner-failed")
+    }
+
+    @Test
+    fun `static on, the runner call MISSES (TransientIssue) - the upstream loop runs instead`() {
+        // artha#5049: a TransientIssue is a Throwable, not an Exception
+        val call = SettleStats.ScreenCall("static")
+        val r = Runner(answer = null, failure = {
+            maestro.utils.network.XCUITestServerError.TransientIssue("screenStatic", "XCTest recorded an issue during /screenStatic")
+        })
         assertThat(r.run(fast = true, upstreamResults = listOf(false, true), call = call)).isTrue()
         assertThat(r.runnerCalls).isEqualTo(1)
         assertThat(r.upstreamCalls).isEqualTo(2)

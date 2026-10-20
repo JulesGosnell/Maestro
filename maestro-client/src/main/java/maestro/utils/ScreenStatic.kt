@@ -1,6 +1,7 @@
 package maestro.utils
 
 import com.github.romankh3.image.comparison.ImageComparison
+import maestro.utils.network.XCUITestServerError
 import java.awt.image.BufferedImage
 
 /**
@@ -200,6 +201,9 @@ object ScreenStatic {
                 call?.let { it.path = "runner"; it.attempts += answer.attempts; it.frames += answer.frames }
                 return answer.static
             } catch (e: Exception) {
+                call?.let { it.path = "runner-failed" }
+            } catch (miss: XCUITestServerError.TransientIssue) {
+                // artha#5049: a miss on /screenStatic is a Throwable, not an Exception — same fallback
                 call?.let { it.path = "runner-failed" }
             }
         }

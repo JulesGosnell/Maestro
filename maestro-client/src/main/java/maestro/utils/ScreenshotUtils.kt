@@ -3,6 +3,7 @@ package maestro.utils
 import com.github.romankh3.image.comparison.ImageComparison
 import maestro.Driver
 import maestro.ViewHierarchy
+import maestro.utils.network.XCUITestServerError
 import okio.Buffer
 import okio.Sink
 import org.slf4j.LoggerFactory
@@ -58,7 +59,13 @@ class ScreenshotUtils {
         /**
          * The upstream settle loop, unchanged in behaviour; [call] only observes it (smithr#1246).
          * Exit reasons: `equal`, `cap` (10 dumps), `deadline` (timeout variant), `loading` (the
-         * last comparison was equal but is-loading kept it going), `error` (a dump threw).
+         * last comparison was equal but is-loading kept it going), `error` (a dump threw), `miss`.
+         *
+         * artha#5049 / Maestro#3: a dump that MISSES — an [XCUITestServerError.TransientIssue], the
+         * runner's 500 "XCTest recorded an issue during /viewHierarchy" (e.g. kAXErrorInvalidUIElement,
+         * "Failed to resolve remote element") — is "ask again": it uses up its turn in the loop and
+         * is never compared. If the loop ENDS on a miss, the miss is rethrown (exit `miss`): the
+         * settle never returns a hierarchy older than its last dump. Any other error stays fatal.
          */
         private fun settle(
             initialHierarchy: ViewHierarchy?,
@@ -66,43 +73,55 @@ class ScreenshotUtils {
             timeoutMs: Int?,
             call: SettleStats.SettleCall?,
         ): ViewHierarchy {
-            var latestHierarchy: ViewHierarchy
+            var lastMiss: XCUITestServerError.TransientIssue? = null
+            fun dump(): ViewHierarchy? = try {
+                viewHierarchy(driver, call).also { lastMiss = null }
+            } catch (miss: XCUITestServerError.TransientIssue) {
+                lastMiss = miss
+                call?.let { it.misses++ }
+                LOGGER.warn("[DriverIssues] settle dump missed on /${miss.endpoint}; asking again")
+                null
+            }
+
+            // null only while every dump so far has missed
+            var latestHierarchy: ViewHierarchy? = initialHierarchy ?: dump()
+            fun settledOn(hierarchyAfter: ViewHierarchy?): Boolean {
+                val before = latestHierarchy
+                if (hierarchyAfter != null && before != null && compare(before, hierarchyAfter, call)) {
+                    val isLoading = before.root.attributes.getOrDefault("is-loading", "false").toBoolean()
+                    if (!isLoading) {
+                        call?.exit = "equal"
+                        return true
+                    }
+                    call?.lastEqualButLoading = true
+                }
+                latestHierarchy = hierarchyAfter ?: before
+                return false
+            }
+
             if (timeoutMs != null) {
                 val endTime = System.currentTimeMillis() + timeoutMs
-                latestHierarchy = initialHierarchy ?: viewHierarchy(driver, call)
                 do {
-                    val hierarchyAfter = viewHierarchy(driver, call)
-                    if (compare(latestHierarchy, hierarchyAfter, call)) {
-                        val isLoading = latestHierarchy.root.attributes.getOrDefault("is-loading", "false").toBoolean()
-                        if (!isLoading) {
-                            call?.exit = "equal"
-                            return hierarchyAfter
-                        }
-                        call?.lastEqualButLoading = true
-                    }
-                    latestHierarchy = hierarchyAfter
+                    val hierarchyAfter = dump()
+                    if (settledOn(hierarchyAfter)) return hierarchyAfter!!
                 } while (System.currentTimeMillis() < endTime)
                 call?.exit = if (call?.lastEqualButLoading == true) "loading" else "deadline"
             } else {
-                latestHierarchy = initialHierarchy ?: viewHierarchy(driver, call)
                 repeat(10) {
-                    val hierarchyAfter = viewHierarchy(driver, call)
-                    if (compare(latestHierarchy, hierarchyAfter, call)) {
-                        val isLoading = latestHierarchy.root.attributes.getOrDefault("is-loading", "false").toBoolean()
-                        if (!isLoading) {
-                            call?.exit = "equal"
-                            return hierarchyAfter
-                        }
-                        call?.lastEqualButLoading = true
-                    }
-                    latestHierarchy = hierarchyAfter
+                    val hierarchyAfter = dump()
+                    if (settledOn(hierarchyAfter)) return hierarchyAfter!!
 
                     MaestroTimer.sleep(MaestroTimer.Reason.WAIT_TO_SETTLE, 200)
                 }
                 call?.exit = if (call?.lastEqualButLoading == true) "loading" else "cap"
             }
 
-            return latestHierarchy
+            // a poll that ENDS on a miss rethrows it — no answer it did not see
+            lastMiss?.let {
+                call?.exit = "miss"
+                throw it
+            }
+            return latestHierarchy!!
         }
 
         /** `==`, exactly as upstream; on a mismatch, classifies why (in memory, no device call). */
