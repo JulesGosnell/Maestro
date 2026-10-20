@@ -447,6 +447,9 @@ object MaestroSessionManager {
             deviceId = deviceId,
             client = xcTestDriverClient,
             getInstalledApps = { xcRunnerCLIUtils.listApps(deviceId) },
+            touchStream = if (deviceType == Device.DeviceType.SIMULATOR) {
+                ios.xctest.TouchVerdicts.streamFromSimulator(deviceId)
+            } else null,
         )
 
         val iosDriver = IOSDriver(

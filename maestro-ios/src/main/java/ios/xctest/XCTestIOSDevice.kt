@@ -21,6 +21,8 @@ class XCTestIOSDevice(
     override val deviceId: String?,
     private val client: XCTestDriverClient,
     private val getInstalledApps: () -> Set<String>,
+    // artha#5055: backboardd's verdict on each tap; null = never re-send (physical, or off)
+    private val touchStream: TouchVerdicts.SimulatorStream? = null,
 ) : IOSDevice {
     private val logger = LoggerFactory.getLogger(XCTestIOSDevice::class.java)
 
@@ -58,11 +60,17 @@ class XCTestIOSDevice(
     }
 
     override fun tap(x: Int, y: Int) {
-        execute {
-            client.tap(
-                x = x.toFloat(),
-                y = y.toFloat(),
-            )
+        val send = {
+            execute {
+                client.tap(
+                    x = x.toFloat(),
+                    y = y.toFloat(),
+                )
+            }
+        }
+        val stream = touchStream ?: return send()
+        stream.send(tap = send) { evidence ->
+            logger.warn("[DriverIssues] backboardd dropped the tap at ($x, $y); re-sending it once. backboardd: $evidence")
         }
     }
 
@@ -201,6 +209,7 @@ class XCTestIOSDevice(
     }
 
     override fun close() {
+        touchStream?.close()
         client.close()
     }
 
