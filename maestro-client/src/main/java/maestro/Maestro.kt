@@ -25,6 +25,7 @@ import maestro.device.DeviceOrientation
 import maestro.drivers.CdpWebDriver
 import maestro.nearside.NearSideSelector
 import maestro.utils.MaestroTimer
+import maestro.utils.network.XCUITestServerError
 import maestro.utils.ScreenshotUtils
 import maestro.utils.FastSettle
 import maestro.utils.SettleStats
@@ -440,20 +441,39 @@ class Maestro(
         viewHierarchy: ViewHierarchy?,
         nearSide: NearSideSelector?,
     ): FindElementResult? {
+        val startMs = System.currentTimeMillis()
+        var hierarchyTimeoutMs = timeoutMs
         if (nearSide != null && viewHierarchy == null) {
             try {
                 return findElementNearSide(timeoutMs, nearSide).also { verifyNearSide(it, filter) }
             } catch (e: Exception) {
                 nearSideStats.driverErrors++
                 LOGGER.warn("Near-side lookup failed; using the full hierarchy for this lookup", e)
+            } catch (miss: XCUITestServerError.TransientIssue) {
+                // Maestro#3: a miss, not an answer; the hierarchy poll takes over for what is
+                // left of this lookup's own timeout
+                nearSideStats.driverErrors++
+                hierarchyTimeoutMs = (timeoutMs - (System.currentTimeMillis() - startMs)).coerceAtLeast(0)
+                LOGGER.warn("[DriverIssues] near-side lookup missed; polling the hierarchy for the remaining ${hierarchyTimeoutMs}ms")
             }
         }
 
         var hierarchy = viewHierarchy ?: ViewHierarchy(TreeNode())
-        val element = MaestroTimer.withTimeout(timeoutMs) {
-            hierarchy = viewHierarchy ?: viewHierarchy()
+        // Maestro#3: a TransientIssue on a hierarchy poll is "ask again", never "not found"; if
+        // the poll ends on one, no answer is given (it is rethrown) — a miss must never pass an
+        // assertNotVisible
+        var lastMiss: XCUITestServerError.TransientIssue? = null
+        val element = MaestroTimer.withTimeout(hierarchyTimeoutMs) {
+            hierarchy = viewHierarchy ?: try {
+                viewHierarchy().also { lastMiss = null }
+            } catch (miss: XCUITestServerError.TransientIssue) {
+                lastMiss = miss
+                return@withTimeout null
+            }
             filter(hierarchy.aggregate()).firstOrNull()
         }?.toUiElementOrNull()
+
+        if (element == null) lastMiss?.let { throw it }
 
         return if (element == null) {
             null

@@ -15,6 +15,9 @@ import xcuitest.XCTestClient
 import xcuitest.XCTestDriverClient
 import xcuitest.api.DeviceInfo
 import xcuitest.api.Error
+import xcuitest.api.NearSideFindRequest
+import xcuitest.api.NearSideSelectorRequest
+import xcuitest.api.NearSideWaitUntilRequest
 import java.net.InetAddress
 
 class XCTestDriverClientTest {
@@ -111,7 +114,106 @@ class XCTestDriverClientTest {
         mockWebServer.shutdown()
     }
 
+    // ── Maestro#3: a 500 "XCTest recorded an issue" on a polled read-only probe is a miss ──
+
+    private fun issueBody(endpoint: String, detail: String = "Failed to resolve query: Failed to resolve remote element") =
+        jacksonObjectMapper().writeValueAsString(
+            Error(errorMessage = "XCTest recorded an issue during /$endpoint: $detail", errorCode = "internal")
+        )
+
+    private fun <T> against500(body: String, call: (XCTestDriverClient) -> T): T {
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody(body))
+        mockWebServer.start(InetAddress.getByName("localhost"), 22087)
+        try {
+            val mockXCTestInstaller = MockXCTestInstaller(MockXCTestInstaller.Simulator())
+            val client = XCTestDriverClient(mockXCTestInstaller, XCTestClient("localhost", 22087))
+            return call(client).also { mockXCTestInstaller.assertInstallationRetries(0) }
+        } finally {
+            mockWebServer.shutdown()
+        }
+    }
+
+    @Test
+    fun `isScreenStatic 500 with the XCTest-issue marker is not-static, not a throw`() {
+        val body = issueBody("isScreenStatic", "Failed to get screenshot: Timed out while requesting screenshot.")
+        val response = against500(body) { it.isScreenStatic() }
+        assertThat(response.isScreenStatic).isFalse()
+    }
+
+    @Test
+    fun `waitUntil 500 with the XCTest-issue marker is a TransientIssue miss, not an UnknownFailure`() {
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(issueBody("waitUntil")) { it.nearSideWaitUntil(aWaitUntil()) }
+        }
+        assertThat(error.endpoint).isEqualTo("waitUntil")
+    }
+
+    @Test
+    fun `viewHierarchy 500 with the XCTest-issue marker is a TransientIssue miss, not an UnknownFailure`() {
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(issueBody("viewHierarchy")) { it.viewHierarchy(emptySet(), false) }
+        }
+        assertThat(error.endpoint).isEqualTo("viewHierarchy")
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideActions")
+    fun `an ACTION 500 with the XCTest-issue marker is still fatal`(action: Action) {
+        assertThrows<XCUITestServerError.UnknownFailure> {
+            against500(issueBody(action.endpoint)) { action.call(it) }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideProbes")
+    fun `a read-only probe 500 WITHOUT the marker is still fatal`(probe: Action) {
+        val body = jacksonObjectMapper().writeValueAsString(
+            Error(errorMessage = "Something else went wrong during /${probe.endpoint}", errorCode = "internal")
+        )
+        assertThrows<XCUITestServerError.UnknownFailure> {
+            against500(body) { probe.call(it) }
+        }
+    }
+
+    @Test
+    fun `a read-only probe 500 with the marker AND an app crash is still an AppCrash`() {
+        assertThrows<XCUITestServerError.AppCrash> {
+            against500(issueBody("viewHierarchy", "Lost connection to the application (pid 19985).")) {
+                it.viewHierarchy(emptySet(), false)
+            }
+        }
+    }
+
+    class Action(val endpoint: String, val call: (XCTestDriverClient) -> Any?) {
+        override fun toString() = endpoint
+    }
+
     companion object {
+
+        private fun aWaitUntil() = NearSideWaitUntilRequest(
+            find = NearSideFindRequest(selector = NearSideSelectorRequest(idRegex = "button-continue"), limit = 10),
+            condition = "visible",
+            timeoutMs = 500,
+        )
+
+        @JvmStatic
+        fun provideActions(): List<Action> = listOf(
+            Action("touch") { it.tap(1f, 2f) },
+            Action("inputText") { it.inputText("x", emptySet()) },
+            Action("swipeV2") { it.swipeV2(emptySet(), 0.0, 0.0, 1.0, 1.0, 0.1) },
+            Action("launchApp") { it.launchApp("com.app.id") },
+            Action("terminateApp") { it.terminateApp("com.app.id") },
+            Action("pressKey") { it.pressKey("delete") },
+            Action("eraseText") { it.eraseText(3, emptySet()) },
+        )
+
+        @JvmStatic
+        fun provideProbes(): List<Action> = listOf(
+            Action("isScreenStatic") { it.isScreenStatic() },
+            Action("waitUntil") { it.nearSideWaitUntil(aWaitUntil()) },
+            Action("viewHierarchy") { it.viewHierarchy(emptySet(), false) },
+        )
 
         @JvmStatic
         fun provideAppCrashMessage(): Array<String> {
