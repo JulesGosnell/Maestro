@@ -1,13 +1,17 @@
 package ios.xctest
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * artha#5055: backboardd's own verdict on each synthesized touch of an iOS simulator.
  *
  * Every XCTest tap reaches the simulator through a NEW virtual digitizer, one per touch.
- * backboardd logs how it set that digitizer up:
+ * backboardd logs how it set that digitizer up when it attaches:
  *
  *     init: <BKDirectTouchState: ...; touchScreen; builtin; senderID: 0x10E907C700009; ...>   delivered
  *     init: <BKDirectTouchState: ...; bad usage pair: (0x0 / 0x4); builtin; senderID: ...>     dropped
@@ -18,70 +22,55 @@ import java.util.concurrent.TimeUnit
  * success either way. Measured: all 3 known dropped taps carried this verdict, and none of the
  * ~134 delivered taps in 8 captured sim logs did.
  *
- * A tap is re-sent only on that POSITIVE verdict. No line, a dead stream, or a lagging stream
- * is [Verdict.UNKNOWN], and UNKNOWN never re-sends: the screen is never consulted.
+ * A tap is re-sent only on that POSITIVE verdict, for a digitizer that ATTACHED between the
+ * tap's send and its return. The verdict is read once the tap has returned, never waited for:
+ * a dropped tap's lines are seconds old by then (XCTest stalls ~5 s after a drop), and a
+ * delivered tap pays only the read. No line, a late line, or a dead stream never re-sends; the
+ * screen is never consulted.
  */
 class TouchVerdicts {
 
-    enum class Verdict { DELIVERED, DROPPED, UNKNOWN }
+    private class Session(val sender: String, val attachedAt: Instant, var evidence: String?)
 
-    private class Session(val sender: String, var dropped: Boolean, var detached: Boolean = false)
+    private val lock = Any()
+    private val sessions = ArrayDeque<Session>()
 
-    private val lock = Object()
-    private val sessions = mutableListOf<Session>()
-
-    /** Where the touches sent after this call begin. */
-    fun mark(): Int = synchronized(lock) { sessions.size }
-
-    /** One line of backboardd's TouchEvents log. Lines that are not a verdict are ignored. */
-    fun accept(line: String) {
+    /** One backboardd TouchEvents message, logged at [at]. Anything but a verdict is ignored. */
+    fun accept(at: Instant, message: String) {
         synchronized(lock) {
             when {
-                INIT in line -> {
-                    val sender = SENDER_ID.find(line)?.groupValues?.get(1)?.uppercase() ?: return
-                    sessions += Session(sender, dropped = GOOD_INIT !in line)
+                INIT in message -> {
+                    val sender = SENDER_ID.find(message)?.groupValues?.get(1)?.uppercase() ?: return
+                    sessions.addLast(Session(sender, at, evidence = message.takeIf { GOOD_INIT !in it }))
+                    while (sessions.size > MAX_SESSIONS) sessions.removeFirst()
                 }
-                UNSUPPORTED in line -> {
-                    val sender = SERVICE_ID.find(line)?.groupValues?.get(1)?.uppercase() ?: return
-                    sessions.lastOrNull { it.sender == sender }?.dropped = true
+                UNSUPPORTED in message -> {
+                    val sender = SERVICE_ID.find(message)?.groupValues?.get(1)?.uppercase() ?: return
+                    val session = sessions.lastOrNull { it.sender == sender } ?: return
+                    if (session.evidence == null) session.evidence = message
                 }
-                DETACHED in line -> {
-                    val sender = DETACHED_SENDER.find(line)?.groupValues?.get(1)?.uppercase() ?: return
-                    sessions.lastOrNull { it.sender == sender }?.detached = true
-                }
-                else -> return
-            }
-            lock.notifyAll()
-        }
-    }
-
-    /**
-     * The verdict on the touches that began after [mark]: DROPPED as soon as one of them is,
-     * DELIVERED once one has come and gone without a drop, UNKNOWN if neither is seen in [timeoutMs].
-     */
-    fun verdictSince(mark: Int, timeoutMs: Long): Verdict {
-        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
-        synchronized(lock) {
-            while (true) {
-                val touches = sessions.drop(mark)
-                if (touches.any { it.dropped }) return Verdict.DROPPED
-                if (touches.any { it.detached }) return Verdict.DELIVERED
-                val leftMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
-                if (leftMs <= 0) return Verdict.UNKNOWN
-                lock.wait(leftMs)
             }
         }
     }
 
     /**
-     * Sends [tap], then sends it ONCE more only if backboardd's verdict on it is DROPPED,
-     * calling [onDropped] with the ignored digitizer first. The re-send is not judged again.
+     * backboardd's evidence that it dropped a touch whose digitizer attached within [from]..[to],
+     * or null: delivered, not (yet) seen, or attached outside the window. Never waits.
      */
-    fun send(tap: () -> Unit, onDropped: (sender: String?) -> Unit) {
-        val mark = mark()
+    fun droppedBetween(from: Instant, to: Instant): String? = synchronized(lock) {
+        sessions.firstOrNull { it.evidence != null && !it.attachedAt.isBefore(from) && !it.attachedAt.isAfter(to) }
+            ?.evidence
+    }
+
+    /**
+     * Sends [tap]; sends it ONCE more only when backboardd dropped a touch attached while [tap]
+     * ran, calling [onDropped] with backboardd's line first. The re-send is not judged again.
+     */
+    fun send(now: () -> Instant = Instant::now, tap: () -> Unit, onDropped: (evidence: String) -> Unit) {
+        val from = now()
         tap()
-        if (verdictSince(mark, VERDICT_WAIT_MS) != Verdict.DROPPED) return
-        onDropped(synchronized(lock) { sessions.drop(mark).firstOrNull { it.dropped }?.sender })
+        val evidence = droppedBetween(from, now()) ?: return
+        onDropped(evidence)
         tap()
     }
 
@@ -89,27 +78,45 @@ class TouchVerdicts {
         private const val INIT = "init: <BKDirectTouchState"
         private const val GOOD_INIT = "; touchScreen; builtin;"
         private const val UNSUPPORTED = "from unsupported service"
-        private const val DETACHED = "digitizer detached"
         private val SENDER_ID = Regex("senderID: 0x([0-9A-Fa-f]+)")
         private val SERVICE_ID = Regex("IOHIDService name: id:0x([0-9A-Fa-f]+)")
-        private val DETACHED_SENDER = Regex("digitizer detached \\(sender ([0-9A-Fa-f]+)\\)")
+        private const val MAX_SESSIONS = 256
 
         const val PROPERTY = "maestro.tapDropResend"
 
-        /** How long a tap waits for backboardd's verdict once XCTest has returned. */
-        const val VERDICT_WAIT_MS = 1500L
+        // `log stream --style ndjson`: "2026-10-20 05:10:59.287388+0000"
+        private val TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSxx")
+        private val json = ObjectMapper()
 
         private val logger = LoggerFactory.getLogger(TouchVerdicts::class.java)
 
+        /** One `log stream --style ndjson` line into [verdicts]; false if it is not a log event. */
+        fun acceptNdjson(verdicts: TouchVerdicts, line: String): Boolean {
+            if (!line.startsWith("{")) return false
+            val event = try { json.readTree(line) } catch (_: Exception) { return false }
+            val message = event.get("eventMessage")?.asText() ?: return false
+            val at = event.get("timestamp")?.asText()
+                ?.let { runCatching { OffsetDateTime.parse(it, TIMESTAMP).toInstant() }.getOrNull() }
+                ?: return false
+            verdicts.accept(at, message)
+            return true
+        }
+
+        fun predicate() = "subsystem == \"com.apple.BackBoard\" AND category == \"TouchEvents\" AND " +
+            "(eventMessage CONTAINS \"$INIT\" OR eventMessage CONTAINS \"$UNSUPPORTED\")"
+
         /**
-         * Follows backboardd's TouchEvents on simulator [udid]. Null when switched off with
-         * -Dmaestro.tapDropResend=off or when the stream cannot be started; the caller then
-         * never re-sends.
+         * Follows backboardd's TouchEvents on simulator [udid] for one driver session. Null when
+         * switched off with -Dmaestro.tapDropResend=off or when it cannot be started; the
+         * driver then never re-sends.
          */
         fun streamFromSimulator(udid: String): SimulatorStream? {
             if (System.getProperty(PROPERTY) == "off") return null
             return try {
-                SimulatorStream(udid)
+                SimulatorStream(
+                    listOf("xcrun", "simctl", "spawn", udid, "log", "stream", "--style", "ndjson", "--predicate", predicate()),
+                    name = udid,
+                )
             } catch (e: Exception) {
                 logger.warn("[DriverIssues] cannot follow backboardd on $udid; dropped taps will not be re-sent", e)
                 null
@@ -117,34 +124,53 @@ class TouchVerdicts {
         }
     }
 
-    /** `log stream` on the simulator, fed line by line into [verdicts]. */
-    class SimulatorStream(udid: String) : AutoCloseable {
+    /**
+     * [command] (a `log stream`), fed line by line into [verdicts]. It runs under a shell that
+     * kills it when its stdin closes, so it ends with the JVM however the JVM ends (exit, an
+     * uncaught throwable's exitProcess, SIGKILL); [close] and a shutdown hook end it sooner.
+     */
+    class SimulatorStream(command: List<String>, name: String) : AutoCloseable {
         val verdicts = TouchVerdicts()
 
         private val process: Process = ProcessBuilder(
-            "xcrun", "simctl", "spawn", udid, "log", "stream", "--style", "compact",
-            "--predicate",
-            "subsystem == \"com.apple.BackBoard\" AND category == \"TouchEvents\" AND " +
-                "(eventMessage CONTAINS \"$INIT\" OR eventMessage CONTAINS \"$UNSUPPORTED\" " +
-                "OR eventMessage CONTAINS \"$DETACHED\")",
+            // the stream ends when stdin closes (the JVM is gone), and the shell ends with the
+            // stream, so a dead stream reaches EOF here
+            listOf("/bin/sh", "-c", "exec 3<&0; \"$@\" </dev/null & p=\$!; { read _ <&3; kill \$p 2>/dev/null; } & r=\$!; wait \$p; kill \$r 2>/dev/null", "touch-verdicts") + command,
         ).redirectErrorStream(true).start()
 
+        private val ended = AtomicBoolean(false)
+        private val hook = Thread { close() }
+
         init {
+            Runtime.getRuntime().addShutdownHook(hook)
             Thread({
                 try {
-                    process.inputStream.bufferedReader().forEachLine { verdicts.accept(it) }
+                    process.inputStream.bufferedReader().forEachLine { acceptNdjson(verdicts, it) }
                 } catch (_: Exception) {
                     // closed under us
                 }
-                logger.info("backboardd touch stream ended (exit ${process.waitFor()})")
-            }, "touch-verdicts-$udid").apply { isDaemon = true }.start()
+                if (ended.compareAndSet(false, true)) {
+                    logger.warn("[DriverIssues] backboardd touch stream on $name ended; dropped taps will not be re-sent")
+                }
+            }, "touch-verdicts-$name").apply { isDaemon = true }.start()
         }
 
-        /** A dead stream gives no verdicts; a tap then waits for none. */
-        val isAlive: Boolean get() = process.isAlive
+        /** A dead stream gives no verdicts; the driver then taps without them. */
+        val isAlive: Boolean get() = !ended.get() && process.isAlive
+
+        /** [TouchVerdicts.send] while the stream is alive; otherwise [tap] alone, never re-sent. */
+        fun send(now: () -> Instant = Instant::now, tap: () -> Unit, onDropped: (evidence: String) -> Unit) {
+            if (!isAlive) return tap()
+            verdicts.send(now, tap, onDropped)
+        }
 
         override fun close() {
-            process.destroy()
+            ended.set(true)
+            // EOF on the shell's stdin is what kills the stream; destroying the shell first
+            // would orphan it
+            process.outputStream.runCatching { close() }
+            if (!process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) process.destroy()
+            runCatching { Runtime.getRuntime().removeShutdownHook(hook) }
         }
     }
 }

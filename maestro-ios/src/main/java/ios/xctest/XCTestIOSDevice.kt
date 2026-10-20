@@ -68,9 +68,9 @@ class XCTestIOSDevice(
                 )
             }
         }
-        val verdicts = touchStream?.takeIf { it.isAlive }?.verdicts ?: return send()
-        verdicts.send(send) { sender ->
-            logger.warn("[DriverIssues] backboardd ignored the tap at ($x, $y) (digitizer $sender, unsupported service); re-sending it once")
+        val stream = touchStream ?: return send()
+        stream.send(tap = send) { evidence ->
+            logger.warn("[DriverIssues] backboardd dropped the tap at ($x, $y); re-sending it once. backboardd: $evidence")
         }
     }
 
