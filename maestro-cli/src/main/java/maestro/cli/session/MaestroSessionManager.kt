@@ -454,7 +454,10 @@ object MaestroSessionManager {
                 deviceId = deviceId,
                 xcTestDevice = xcTestDevice,
                 deviceController = deviceController,
-                insights = CliInsights
+                insights = CliInsights,
+                hostTouch = ios.hosttouch.HostTouch.forDevice(deviceId, iOSDeviceType, interfaceSize = {
+                    xcTestDevice.deviceInfo().let { it.widthPoints to it.heightPoints }
+                }),
             ),
             insights = CliInsights
         )

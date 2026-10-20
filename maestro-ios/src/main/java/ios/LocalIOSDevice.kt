@@ -7,6 +7,7 @@ import xcuitest.api.DeviceInfo
 import xcuitest.api.NearSideCapabilities
 import xcuitest.api.NearSideWaitUntilRequest
 import xcuitest.api.NearSideWaitUntilResponse
+import ios.hosttouch.HostTouch
 import ios.xctest.XCTestIOSDevice
 import okio.Sink
 import java.io.InputStream
@@ -21,7 +22,9 @@ class LocalIOSDevice(
     override val deviceId: String?,
     private val xcTestDevice: XCTestIOSDevice,
     private val deviceController: IOSDevice,
-    private val insights: Insights = NoopInsights
+    private val insights: Insights = NoopInsights,
+    // smithr#1313: gestures through the simulator's built-in digitizer; null = XCTest, as before
+    private val hostTouch: HostTouch? = null,
 ) : IOSDevice {
 
     private val executor by lazy { Executors.newSingleThreadScheduledExecutor() }
@@ -70,11 +73,13 @@ class LocalIOSDevice(
     }
 
     override fun tap(x: Int, y: Int) {
-        return xcTestDevice.tap(x, y)
+        val host = hostTouch ?: return xcTestDevice.tap(x, y)
+        host.tap(x, y, HostTouch.TAP_HOLD_MS) { xcTestDevice.tap(x, y) }
     }
 
     override fun longPress(x: Int, y: Int, durationMs: Long) {
-        xcTestDevice.longPress(x, y, durationMs)
+        val host = hostTouch ?: return xcTestDevice.longPress(x, y, durationMs)
+        host.tap(x, y, durationMs) { xcTestDevice.longPress(x, y, durationMs) }
     }
 
     override fun pressKey(name: String) {
@@ -92,7 +97,10 @@ class LocalIOSDevice(
         yEnd: Double,
         duration: Double
     ) {
-        xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration)
+        val host = hostTouch ?: return xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration)
+        host.swipe(xStart, yStart, xEnd, yEnd, (duration * 1000).toLong()) {
+            xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration)
+        }
     }
 
     override fun input(text: String) {
@@ -155,7 +163,8 @@ class LocalIOSDevice(
     }
 
     override fun setOrientation(orientation: String) {
-        return xcTestDevice.setOrientation(orientation)
+        xcTestDevice.setOrientation(orientation)
+        hostTouch?.orientationChanged(orientation)
     }
 
     override fun isShutdown(): Boolean {
@@ -163,6 +172,7 @@ class LocalIOSDevice(
     }
 
     override fun close() {
+        hostTouch?.close()
         xcTestDevice.close()
     }
 

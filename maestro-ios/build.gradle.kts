@@ -7,6 +7,24 @@ plugins {
     alias(libs.plugins.mavenPublish)
 }
 
+// smithr#1313: the simulator touch helper, compiled into the jar as /ios-host-touch/ios-host-touch
+// (HostTouch.RESOURCE). It needs the macOS SDK, so a build elsewhere carries no helper and every
+// simulator gesture stays on XCTest, saying so.
+val iosHostTouchSource = file("src/main/objc/ios-host-touch.m")
+val iosHostTouchOut = layout.buildDirectory.dir("generated/ios-host-touch")
+val buildIosHostTouch by tasks.registering(Exec::class) {
+    inputs.file(iosHostTouchSource)
+    outputs.dir(iosHostTouchOut)
+    onlyIf { System.getProperty("os.name").startsWith("Mac") }
+    val binary = iosHostTouchOut.get().file("ios-host-touch/ios-host-touch").asFile
+    doFirst { binary.parentFile.mkdirs() }
+    commandLine(
+        "xcrun", "clang", "-fobjc-arc", "-Wall", "-Werror", "-O2", "-mmacosx-version-min=13.0",
+        "-arch", "x86_64", "-arch", "arm64", "-framework", "Foundation", "-framework", "CoreGraphics",
+        "-o", binary.path, iosHostTouchSource.path,
+    )
+}
+
 sourceSets {
     main {
         java {
@@ -14,6 +32,9 @@ sourceSets {
                 "build/generated/source/proto/main/java",
                 "build/generated/source/proto/main/kotlin",
             )
+        }
+        resources {
+            srcDir(buildIosHostTouch)
         }
     }
 }
@@ -39,6 +60,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.google.truth)
+    testImplementation(libs.mockk)
 }
 
 java {
