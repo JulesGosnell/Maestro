@@ -151,11 +151,44 @@ class HostTouchTest {
         }
     }
 
+    private fun fake(mode: String): (String) -> List<String> = { listOf("/bin/sh", helperScript(), mode, record.toString()) }
+
     @Test
-    fun `a simulator gets one when the switch is on, and it starts nothing until a gesture`() {
-        HostTouch.forDevice("udid", IOSDeviceType.SIMULATOR, anySize, switch = "on").also {
-            assertThat(it).isNotNull()
-            it!!.close()
-        }
+    fun `a simulator gets one when the switch is on, with its helper already started`() {
+        val touch = HostTouch.forDevice("udid", IOSDeviceType.SIMULATOR, anySize, switch = "on", helperCommand = fake("ok"))
+        assertThat(touch).isNotNull()
+        opened += touch!!
+        touch.tap(195, 422, HostTouch.TAP_HOLD_MS) { error("not XCTest") }
+        assertThat(sent()).hasSize(1)
+    }
+
+    @Test
+    fun `switch on and a helper that will not start fails the session loudly - no silent XCTest`() {
+        val e = runCatching {
+            HostTouch.forDevice("udid", IOSDeviceType.SIMULATOR, anySize, switch = "on", helperCommand = fake("noready"))
+        }.exceptionOrNull()
+        assertThat(e).isInstanceOf(IllegalStateException::class.java)
+        assertThat(e!!.message).contains("mode=on")
+        assertThat(e.message).contains("fail no simulator")
+        assertThat(e.message).contains("-Dmaestro.iosHostTouch=off")
+    }
+
+    @Test
+    fun `switch on and no helper in the build fails the session loudly`() {
+        val e = runCatching {
+            HostTouch.forDevice("udid", IOSDeviceType.SIMULATOR, anySize, switch = "on",
+                helperCommand = { throw IllegalStateException("this Maestro build carries no ios-host-touch") })
+        }.exceptionOrNull()
+        assertThat(e).isInstanceOf(IllegalStateException::class.java)
+        assertThat(e!!.message).contains("carries no ios-host-touch")
+    }
+
+    @Test
+    fun `the mode names its source, and an unreadable value is off and says so`() {
+        assertThat(HostTouch.mode("on")).isEqualTo(true to "-Dmaestro.iosHostTouch=on")
+        assertThat(HostTouch.mode("off").first).isFalse()
+        assertThat(HostTouch.mode(null)).isEqualTo(false to "-Dmaestro.iosHostTouch unset, the default")
+        assertThat(HostTouch.mode("yes").first).isFalse()
+        assertThat(HostTouch.mode("yes").second).contains("neither on nor off, so OFF")
     }
 }

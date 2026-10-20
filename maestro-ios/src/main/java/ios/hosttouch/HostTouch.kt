@@ -37,6 +37,23 @@ class HostTouch(
     private var orientation = HostTouchGeometry.PORTRAIT
     private var screenChecked = false
 
+    /**
+     * Starts the helper now, or throws: with the switch on, a helper that will not start is a
+     * failed session, never a silent fall back to XCTest.
+     */
+    @Synchronized
+    fun start() {
+        if (helper != null) return
+        helper = try {
+            startHelper()
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "[HostTouch] mode=on (-D$PROPERTY=on) but ios-host-touch did not start: ${e.message}. " +
+                    "Fix the helper, or run with -D$PROPERTY=off to use XCTest.", e
+            )
+        }
+    }
+
     /** Called with the orientation Maestro asked XCTest for; the screen is checked again. */
     @Synchronized
     fun orientationChanged(orientation: String) {
@@ -156,31 +173,52 @@ class HostTouch(
 
         private fun f(v: Double) = "%.6f".format(java.util.Locale.ROOT, v)
 
-        /** -Dmaestro.iosHostTouch=on|off; off unless exactly "on". */
-        fun isOn(value: String? = System.getProperty(PROPERTY)): Boolean {
-            if (value != null && value != "on" && value != "off") {
-                logger.warn("[HostTouch] -D$PROPERTY=$value is neither on nor off; it is off")
-            }
-            return value == "on"
+        /**
+         * -Dmaestro.iosHostTouch=on|off, default off: whether it is on, and where that came from,
+         * for the session's one mode line. Anything but exactly "on" or "off" is off, and says so.
+         */
+        fun mode(value: String? = System.getProperty(PROPERTY)): Pair<Boolean, String> = when (value) {
+            "on" -> true to "-D$PROPERTY=on"
+            "off" -> false to "-D$PROPERTY=off"
+            null -> false to "-D$PROPERTY unset, the default"
+            else -> false to "-D$PROPERTY=$value is neither on nor off, so OFF"
         }
+
+        fun isOn(value: String? = System.getProperty(PROPERTY)): Boolean = mode(value).first
 
         /**
          * The HostTouch for a device, or null — and null means XCTest exactly as before: always
-         * for a physical iPhone, and for a simulator unless the switch is on.
+         * for a physical iPhone, and for a simulator unless the switch is on. Logs the session's
+         * mode once. With the switch on, the helper is started HERE and a helper that does not
+         * start fails the session: a run must never claim host touch while using XCTest.
          */
         fun forDevice(
             udid: String,
             deviceType: IOSDeviceType,
             interfaceSize: () -> Pair<Int, Int>,
             switch: String? = System.getProperty(PROPERTY),
+            helperCommand: (udid: String) -> List<String> = { listOf(helperBinary().toString(), it) },
         ): HostTouch? {
-            if (deviceType != IOSDeviceType.SIMULATOR) return null
-            if (!isOn(switch)) return null
-            logger.info("[HostTouch] on for simulator $udid: tap, long press and swipe go through its built-in digitizer")
-            return HostTouch(
-                startHelper = { HostTouchHelper(listOf(helperBinary().toString(), udid), name = udid) },
+            val (on, source) = mode(switch)
+            if (deviceType != IOSDeviceType.SIMULATOR) {
+                logger.info("[HostTouch] mode=off (physical iPhone $udid: always XCTest; $source applies to simulators only)")
+                return null
+            }
+            if (!on) {
+                val log: (String) -> Unit = if (switch == null || switch == "off") logger::info else logger::warn
+                log("[HostTouch] mode=off (source: $source); gestures use XCTest")
+                return null
+            }
+            val touch = HostTouch(
+                startHelper = { HostTouchHelper(helperCommand(udid), name = udid) },
                 interfaceSize = interfaceSize,
             )
+            touch.start()
+            logger.info(
+                "[HostTouch] mode=on (source: $source); simulator $udid: tap, long press and swipe go " +
+                    "through its built-in digitizer, helper ready"
+            )
+            return touch
         }
 
         /**
