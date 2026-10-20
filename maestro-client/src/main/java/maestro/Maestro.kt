@@ -189,7 +189,10 @@ class Maestro(
     ) {
         LOGGER.info("Tapping on element: ${tapRepeat ?: ""} $element")
 
-        val hierarchyBeforeTap = waitForAppToSettle(initialHierarchy, appId, waitToSettleTimeoutMs) ?: initialHierarchy
+        // artha#5055: a near-side lookup's hierarchy is the element alone, which no full
+        // after-tap hierarchy can equal; retryIfNoChange compares against the whole screen.
+        val hierarchyBeforeTap = waitForAppToSettle(initialHierarchy, appId, waitToSettleTimeoutMs)
+            ?: if (retryIfNoChange) viewHierarchy() else initialHierarchy
 
         val center = (
                 hierarchyBeforeTap
@@ -362,7 +365,13 @@ class Maestro(
             } else {
                 driver.tap(Point(x, y))
             }
+            // artha#5055: iOS's settle answers null when the screen went STATIC, which means "no
+            // hierarchy was taken", not "the hierarchy changed". Compared as-is, null never equals
+            // the before-tap hierarchy, so every iOS tap read as "changed" and retryIfNoChange
+            // could never fire — not even on a tap the simulator dropped. When the comparison
+            // decides something (a retry is left), take the hierarchy it needs.
             val hierarchyAfterTap = waitForAppToSettle(waitToSettleTimeoutMs = waitToSettleTimeoutMs)
+                ?: if (retries > 1) viewHierarchy() else null
 
             if (hierarchyBeforeTap != hierarchyAfterTap) {
                 LOGGER.info("Something have changed in the UI judging by view hierarchy. Proceed.")

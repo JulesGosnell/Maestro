@@ -68,6 +68,13 @@ class FakeDriver : Driver {
     var nearSideQueries: Int = 0
         private set
 
+    // artha#5055: settle as IOSDriver does — null once the screen is static, "no hierarchy taken"
+    var settlesLikeIos: Boolean = false
+
+    // artha#5055: the next N taps are recorded but reach nothing, as when the simulator's
+    // backboardd ignores a synthesized touch ("unsupported service")
+    var tapsToDrop: Int = 0
+
     override fun name(): String {
         return "Fake Device"
     }
@@ -159,7 +166,7 @@ class FakeDriver : Driver {
     override fun tap(point: Point) {
         ensureOpen()
 
-        layout.dispatchClick(point.x, point.y)
+        if (tapsToDrop > 0) tapsToDrop-- else layout.dispatchClick(point.x, point.y)
 
         events += Event.Tap(point)
     }
@@ -391,7 +398,8 @@ class FakeDriver : Driver {
         }
     }
 
-    override fun waitForAppToSettle(initialHierarchy: ViewHierarchy?, appId: String?, timeoutMs: Int?): ViewHierarchy {
+    override fun waitForAppToSettle(initialHierarchy: ViewHierarchy?, appId: String?, timeoutMs: Int?): ViewHierarchy? {
+        if (settlesLikeIos && waitUntilScreenIsStatic(3000)) return null
         return ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
     }
 
