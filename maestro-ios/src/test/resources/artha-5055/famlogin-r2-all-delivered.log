@@ -1,0 +1,107 @@
+2026-10-18 16:33:19.431 Df backboardd[99343:d1af4e] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b1c0e0; touchScreen; builtin; senderID: 0x104009D30000B; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:19.649 Df backboardd[99343:d1af4e] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D30000B) builtIn:1
+2026-10-18 16:33:20.908 Df backboardd[99343:d1af4e] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61420; touchScreen; builtin; senderID: 0x104504C40000C; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:21.128 Df backboardd[99343:d1a7ce] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104504C40000C) builtIn:1
+2026-10-18 16:33:25.200 Df backboardd[99343:d1af4e] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104205190000D; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:25.427 Df backboardd[99343:d1a7c6] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104205190000D) builtIn:1
+2026-10-18 16:33:27.541 Df backboardd[99343:d1a7c6] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104604DC0000E; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:28.344 Df backboardd[99343:d1b38e] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104604DC0000E) builtIn:1
+2026-10-18 16:33:29.949 Df backboardd[99343:d1a7c4] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b08000; touchScreen; builtin; senderID: 0x104705AB0000F; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:30.761 Df backboardd[99343:d1af4d] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104705AB0000F) builtIn:1
+2026-10-18 16:33:32.428 Df backboardd[99343:d1af40] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b481c0; touchScreen; builtin; senderID: 0x104604DC00010; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:33.231 Df backboardd[99343:d1af48] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104604DC00010) builtIn:1
+2026-10-18 16:33:34.921 Df backboardd[99343:d1b077] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104504C400011; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:35.728 Df backboardd[99343:d1a7c4] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104504C400011) builtIn:1
+2026-10-18 16:33:37.804 Df backboardd[99343:d1af4f] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b2c000; touchScreen; builtin; senderID: 0x1043060200012; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:38.615 Df backboardd[99343:d1af4e] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1043060200012) builtIn:1
+2026-10-18 16:33:40.443 Df backboardd[99343:d1af40] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104009D300013; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:40.661 Df backboardd[99343:d1af46] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300013) builtIn:1
+2026-10-18 16:33:42.791 Df backboardd[99343:d1af50] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x10C8058900014; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:43.014 Df backboardd[99343:d1af4c] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10C8058900014) builtIn:1
+2026-10-18 16:33:52.527 Df backboardd[99343:d1c443] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b00000; touchScreen; builtin; senderID: 0x10CB049F00015; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:52.748 Df backboardd[99343:d1c445] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB049F00015) builtIn:1
+2026-10-18 16:33:54.284 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b45ce0; touchScreen; builtin; senderID: 0x10E2111200016; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:54.394 Df backboardd[99343:d1c443] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200016) builtIn:1
+2026-10-18 16:33:55.007 Df backboardd[99343:d1c443] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b21c00; touchScreen; builtin; senderID: 0x11C3049E00017; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:58.371 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 11C3049E00017) builtIn:1
+2026-10-18 16:33:58.912 Df backboardd[99343:d1c43a] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104504C400018; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:59.015 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104504C400018) builtIn:1
+2026-10-18 16:33:59.189 Df backboardd[99343:d1c43a] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b10000; touchScreen; builtin; senderID: 0x1085059F00019; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:33:59.594 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1085059F00019) builtIn:1
+2026-10-18 16:34:01.355 Df backboardd[99343:d1b781] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61ce0; touchScreen; builtin; senderID: 0x104009D30001A; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:01.582 Df backboardd[99343:d1c438] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D30001A) builtIn:1
+2026-10-18 16:34:03.286 Df backboardd[99343:d1c444] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b1c0e0; touchScreen; builtin; senderID: 0x10E211120001B; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:03.511 Df backboardd[99343:d1af44] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E211120001B) builtIn:1
+2026-10-18 16:34:05.635 Df backboardd[99343:d1b781] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b08000; touchScreen; builtin; senderID: 0x104009D30001C; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:05.748 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D30001C) builtIn:1
+2026-10-18 16:34:06.378 Df backboardd[99343:d1c437] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b30000; touchScreen; builtin; senderID: 0x104009D30001D; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:09.744 Df backboardd[99343:d1b782] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D30001D) builtIn:1
+2026-10-18 16:34:10.284 Df backboardd[99343:d1b782] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b29a40; touchScreen; builtin; senderID: 0x104009D30001E; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:10.392 Df backboardd[99343:d1c445] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D30001E) builtIn:1
+2026-10-18 16:34:10.570 Df backboardd[99343:d1c441] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b45ce0; touchScreen; builtin; senderID: 0x1047056B0001F; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:12.500 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1047056B0001F) builtIn:1
+2026-10-18 16:34:14.037 Df backboardd[99343:d1c4cb] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b45ce0; touchScreen; builtin; senderID: 0x104009D300020; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:14.259 Df backboardd[99343:d1c43f] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300020) builtIn:1
+2026-10-18 16:34:16.061 Df backboardd[99343:d1c448] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61420; touchScreen; builtin; senderID: 0x1085059F00021; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:16.280 Df backboardd[99343:d1b782] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1085059F00021) builtIn:1
+2026-10-18 16:34:17.437 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61420; touchScreen; builtin; senderID: 0x10E2111200022; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:17.659 Df backboardd[99343:d1c442] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200022) builtIn:1
+2026-10-18 16:34:18.935 Df backboardd[99343:d1c43b] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b30000; touchScreen; builtin; senderID: 0x10E2111200023; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:19.160 Df backboardd[99343:d1c604] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200023) builtIn:1
+2026-10-18 16:34:21.035 Df backboardd[99343:d1c5ba] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x1085059F00024; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:21.259 Df backboardd[99343:d1c43e] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1085059F00024) builtIn:1
+2026-10-18 16:34:22.201 Df backboardd[99343:d1c43f] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x10E2111200025; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:22.425 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200025) builtIn:1
+2026-10-18 16:34:23.295 Df backboardd[99343:d1c436] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x10E2111200026; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:23.513 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200026) builtIn:1
+2026-10-18 16:34:24.770 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x10E2111200027; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:24.878 Df backboardd[99343:d1b781] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200027) builtIn:1
+2026-10-18 16:34:25.060 Df backboardd[99343:d1c5ba] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61420; touchScreen; builtin; senderID: 0x10E2111200028; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:26.827 Df backboardd[99343:d1cedd] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200028) builtIn:1
+2026-10-18 16:34:27.900 Df backboardd[99343:d1c442] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x10E2111200029; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:28.128 Df backboardd[99343:d1c43c] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200029) builtIn:1
+2026-10-18 16:34:30.646 Df backboardd[99343:d1c446] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x10CB049F0002A; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:30.870 Df backboardd[99343:d1c43f] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB049F0002A) builtIn:1
+2026-10-18 16:34:31.792 Df backboardd[99343:d1c43c] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b1c0e0; touchScreen; builtin; senderID: 0x10CB049F0002B; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:32.597 Df backboardd[99343:d1c441] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB049F0002B) builtIn:1
+2026-10-18 16:34:34.103 Df backboardd[99343:d1c43a] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b00000; touchScreen; builtin; senderID: 0x102606DC0002C; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:34.911 Df backboardd[99343:d1c43f] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 102606DC0002C) builtIn:1
+2026-10-18 16:34:36.403 Df backboardd[99343:d1b783] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x104306020002D; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:37.211 Df backboardd[99343:d1c439] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104306020002D) builtIn:1
+2026-10-18 16:34:38.683 Df backboardd[99343:d1c604] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x10E211120002E; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:39.494 Df backboardd[99343:d1c43f] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E211120002E) builtIn:1
+2026-10-18 16:34:40.974 Df backboardd[99343:d1c440] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61ce0; touchScreen; builtin; senderID: 0x1080065F0002F; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:41.779 Df backboardd[99343:d1c438] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1080065F0002F) builtIn:1
+2026-10-18 16:34:43.476 Df backboardd[99343:d1c446] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x104009D300030; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:43.694 Df backboardd[99343:d1c43d] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300030) builtIn:1
+2026-10-18 16:34:45.613 Df backboardd[99343:d1c43c] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x10E2111200031; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:45.833 Df backboardd[99343:d1b781] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200031) builtIn:1
+2026-10-18 16:34:55.250 Df backboardd[99343:d1e6ab] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b29a40; touchScreen; builtin; senderID: 0x104009D300032; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:55.477 Df backboardd[99343:d1e6a6] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300032) builtIn:1
+2026-10-18 16:34:56.584 Df backboardd[99343:d1e69f] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61ce0; touchScreen; builtin; senderID: 0x10E2111200033; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:56.811 Df backboardd[99343:d1e6a5] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10E2111200033) builtIn:1
+2026-10-18 16:34:58.680 Df backboardd[99343:d1e6a8] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b10000; touchScreen; builtin; senderID: 0x104009D300034; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:34:58.790 Df backboardd[99343:d1e6b1] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300034) builtIn:1
+2026-10-18 16:34:59.404 Df backboardd[99343:d1c445] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b2c000; touchScreen; builtin; senderID: 0x10CD070100035; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:03.684 Df backboardd[99343:d1e69e] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CD070100035) builtIn:1
+2026-10-18 16:35:04.373 Df backboardd[99343:d1e9a0] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b442a0; touchScreen; builtin; senderID: 0x104705AF00036; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:04.570 Df backboardd[99343:d1e6b0] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104705AF00036) builtIn:1
+2026-10-18 16:35:04.868 Df backboardd[99343:d1e6ad] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b3c000; touchScreen; builtin; senderID: 0x10CB049F00037; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:06.803 Df backboardd[99343:d1e6ad] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB049F00037) builtIn:1
+2026-10-18 16:35:10.618 Df backboardd[99343:d1e6ae] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b40000; touchScreen; builtin; senderID: 0x10CB056600038; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:10.844 Df backboardd[99343:d1e6ad] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB056600038) builtIn:1
+2026-10-18 16:35:11.975 Df backboardd[99343:d1e99f] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b61ce0; touchScreen; builtin; senderID: 0x104009D300039; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:12.194 Df backboardd[99343:d1e6a3] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 104009D300039) builtIn:1
+2026-10-18 16:35:16.515 Df backboardd[99343:d1e69f] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b001c0; touchScreen; builtin; senderID: 0x10CB05660003A; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:16.759 Df backboardd[99343:d1c444] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 10CB05660003A) builtIn:1
+2026-10-18 16:35:23.968 Df backboardd[99343:d1e9a0] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b29b20; touchScreen; builtin; senderID: 0x102705AC0003B; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:24.109 Df backboardd[99343:d1e6ac] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 102705AC0003B) builtIn:1
+2026-10-18 16:35:24.627 Df backboardd[99343:d1c445] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b001c0; touchScreen; builtin; senderID: 0x108004080003C; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:26.615 Df backboardd[99343:d1e6ac] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 108004080003C) builtIn:1
+2026-10-18 16:35:32.815 Df backboardd[99343:d1ef9a] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b542a0; touchScreen; builtin; senderID: 0x102704D50003D; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:37.128 Df backboardd[99343:d1ef9a] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 102704D50003D) builtIn:1
+2026-10-18 16:35:57.849 Df backboardd[99343:d1fdc4] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b040e0; touchScreen; builtin; senderID: 0x1027049D0003E; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:35:58.848 Df backboardd[99343:d1fdc8] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1027049D0003E) builtIn:1
+2026-10-18 16:36:17.157 Df backboardd[99343:d20562] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b542a0; touchScreen; builtin; senderID: 0x1082053F0003F; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
+2026-10-18 16:36:17.671 Df backboardd[99343:d20568] [com.apple.BackBoard:TouchEvents] digitizer detached (sender 1082053F0003F) builtIn:1
+2026-10-18 16:39:32.291 Df backboardd[91684:d237a4] [com.apple.BackBoard:TouchEvents] init: <BKDirectTouchState: 0x600003b34000; touchScreen; builtin; senderID: 0xACEFADE00000002; contacts: contacts: []; destinations: []; latentSystemGestureDestinations: ()>
