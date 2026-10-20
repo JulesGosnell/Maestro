@@ -158,6 +158,8 @@ class HostTouchTest {
         val touch = HostTouch.forDevice("udid", IOSDeviceType.SIMULATOR, anySize, switch = "on", helperCommand = fake("ok"))
         assertThat(touch).isNotNull()
         opened += touch!!
+        assertThat(touch.start().coreSimulatorVersion).isEqualTo("1051.17.7")
+        assertThat(touch.start().deviceName).isEqualTo("fake [phone]")
         touch.tap(195, 422, HostTouch.TAP_HOLD_MS) { error("not XCTest") }
         assertThat(sent()).hasSize(1)
     }

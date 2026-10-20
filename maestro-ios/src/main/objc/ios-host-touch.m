@@ -11,7 +11,8 @@
 // One process per Maestro session, LONG-LIVED: started once, then driven line by line.
 //
 //   usage: ios-host-touch <udid>
-//   stdout, once: "ready <width_pt> <height_pt> <scale> <device name>" | "fail <reason>" (exit != 0)
+//   stdout, once: "ready <width_pt> <height_pt> <scale> <CoreSimulator version> <device name>"
+//                 | "fail <reason>" (exit != 0)
 //   stdin, one command per line; coordinates are FRACTIONS (0..1) of the PORTRAIT screen:
 //     tap   X Y HOLD_MS                        down, hold, up
 //     swipe X1 Y1 X2 Y2 HOLD_MS MOVE_MS         down at 1, hold, move to 2 over MOVE_MS, up at 2
@@ -196,7 +197,12 @@ int main(int argc, char **argv) {
         dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0));
     acks = dispatch_semaphore_create(0);
 
-    reply("ready %.0f %.0f %.0f %s", pixels.width / scale, pixels.height / scale, scale,
+    // Legacy Indigo input is version-pinned (idb: from CoreSimulator 1155.4 the guest drops it),
+    // so the session names the CoreSimulator it is talking to.
+    NSString *coreSimulator = [[NSBundle bundleWithPath:@"/Library/Developer/PrivateFrameworks/CoreSimulator.framework"]
+        objectForInfoDictionaryKey:@"CFBundleVersion"] ?: @"unknown";
+    reply("ready %.0f %.0f %.0f %s %s", pixels.width / scale, pixels.height / scale, scale,
+          [coreSimulator stringByReplacingOccurrencesOfString:@" " withString:@"_"].UTF8String,
           [[device valueForKey:@"name"] UTF8String]);
 
     char *line = NULL;

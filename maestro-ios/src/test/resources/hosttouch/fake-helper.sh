@@ -14,7 +14,7 @@ case $mode in
   noready) echo "fail no simulator"; exit 4 ;;
   hang) exec cat > /dev/null ;;
 esac
-echo "ready 390 844 3 fake [phone]"
+echo "ready 390 844 3 1051.17.7 fake [phone]"
 while IFS= read -r line; do
   echo "$line" >> "$record"
   case $mode in

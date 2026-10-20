@@ -42,10 +42,10 @@ class HostTouch(
      * failed session, never a silent fall back to XCTest.
      */
     @Synchronized
-    fun start() {
-        if (helper != null) return
-        helper = try {
-            startHelper()
+    fun start(): HostTouchHelper {
+        helper?.let { return it }
+        return try {
+            startHelper().also { helper = it }
         } catch (e: Exception) {
             throw IllegalStateException(
                 "[HostTouch] mode=on (-D$PROPERTY=on) but ios-host-touch did not start: ${e.message}. " +
@@ -213,10 +213,10 @@ class HostTouch(
                 startHelper = { HostTouchHelper(helperCommand(udid), name = udid) },
                 interfaceSize = interfaceSize,
             )
-            touch.start()
+            val helper = touch.start()
             logger.info(
-                "[HostTouch] mode=on (source: $source); simulator $udid: tap, long press and swipe go " +
-                    "through its built-in digitizer, helper ready"
+                "[HostTouch] mode=on (source: $source); simulator $udid (${helper.deviceName}): tap, long press " +
+                    "and swipe go through its built-in digitizer; CoreSimulator ${helper.coreSimulatorVersion}"
             )
             return touch
         }

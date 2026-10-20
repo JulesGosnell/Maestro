@@ -51,3 +51,12 @@ What the log says (the driver log, `maestro.log`):
   not re-send it (it may have landed), logs `[DriverIssues]`, and later gestures use XCTest.
 
 `-Dmaestro.iosHostTouch.helper=<path>` runs a different helper binary (development only).
+
+⛔ **The transport is version-pinned.** The helper speaks SimulatorKit's *legacy Indigo* input
+(`IndigoHIDMessageForMouseNSEvent`, 6 arguments), correct for Xcode 26.2 / CoreSimulator 1051.17.7.
+idb records that from CoreSimulator 1155.4 (Xcode 27) the guest drops legacy Indigo input — the
+successor is the DTUHID transport (idb `SimulatorDigitizerHIDTransport.swift`). A transport that
+ACCEPTS a touch and then drops it passes the helper's start check and acks, so nothing here fails
+loud. The mode line names the CoreSimulator version for that reason. **After any Xcode or
+CoreSimulator upgrade, re-run the starvation acceptance (smithr#1313 item 1: host path 0 drops in
+≥300 taps under testmanagerd SIGSTOP 50/3 ms) before turning the flag on.**

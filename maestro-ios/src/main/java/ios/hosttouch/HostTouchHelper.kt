@@ -34,6 +34,7 @@ class HostTouchHelper(command: List<String>, private val name: String, readyTime
 
     val portraitWidth: Double
     val portraitHeight: Double
+    val coreSimulatorVersion: String
     val deviceName: String
 
     init {
@@ -55,8 +56,8 @@ class HostTouchHelper(command: List<String>, private val name: String, readyTime
         }, "ios-host-touch-stderr-$name").apply { isDaemon = true }.start()
 
         val ready = lines.poll(readyTimeoutMs, TimeUnit.MILLISECONDS)
-        val fields = ready?.split(" ", limit = 5)
-        if (fields == null || fields.size < 4 || fields[0] != "ready") {
+        val fields = ready?.split(" ", limit = 6)
+        if (fields == null || fields.size < 5 || fields[0] != "ready") {
             close()
             throw IllegalStateException(
                 if (ready == null) "no answer within ${readyTimeoutMs}ms" else "it said: $ready"
@@ -64,7 +65,8 @@ class HostTouchHelper(command: List<String>, private val name: String, readyTime
         }
         portraitWidth = fields[1].toDouble()
         portraitHeight = fields[2].toDouble()
-        deviceName = fields.getOrElse(4) { "" }
+        coreSimulatorVersion = fields[4]
+        deviceName = fields.getOrElse(5) { "" }
     }
 
     val isAlive: Boolean get() = !closed.get() && process.isAlive
