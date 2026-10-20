@@ -84,7 +84,7 @@ class XCTestDriverClient(
     }
 
     fun isScreenStatic(): IsScreenStaticResponse {
-        val responseString = executeJsonRequest("isScreenStatic")
+        val responseString = executeGetRequest("isScreenStatic", "threshold" to IosStaticThreshold.value().toString())
         return mapper.readValue(responseString, IsScreenStaticResponse::class.java)
     }
 
@@ -209,7 +209,7 @@ class XCTestDriverClient(
 
     /** smithr#1246 Phase C: only called when [nearSideCapabilities] advertised `screenStatic`. */
     fun screenStatic(timeoutMs: Long): ScreenStaticResponse {
-        val response = executeJsonRequest("screenStatic", ScreenStaticRequest(timeoutMs))
+        val response = executeJsonRequest("screenStatic", ScreenStaticRequest(timeoutMs, IosStaticThreshold.value()))
         return mapper.readValue(response, ScreenStaticResponse::class.java)
     }
 
@@ -268,10 +268,11 @@ class XCTestDriverClient(
             .execute().use { processResponse(it, pathSegment) }
     }
 
-    private fun executeJsonRequest(pathSegment: String): String {
-        val requestBuilder = Request.Builder()
-            .url(client.xctestAPIBuilder(pathSegment).build())
-            .get()
+    private fun executeGetRequest(pathSegment: String, vararg query: Pair<String, String>): String {
+        val url = client.xctestAPIBuilder(pathSegment)
+            .apply { query.forEach { (name, value) -> addQueryParameter(name, value) } }
+            .build()
+        val requestBuilder = Request.Builder().url(url).get()
 
         return okHttpClient
             .newCall(requestBuilder.build())

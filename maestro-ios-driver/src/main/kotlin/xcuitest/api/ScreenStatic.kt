@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 // smithr#1246 Phase C: POST /screenStatic — the settle's "is the screen static?" loop, run on the
 // runner. Used only when GET /capabilities advertises `screenStatic` >= 1.
 
-data class ScreenStaticRequest(val timeoutMs: Long)
+// artha#5049: threshold, the fraction of pixels two frames may differ by and still be static
+data class ScreenStaticRequest(val timeoutMs: Long, val threshold: Double = 0.0)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ScreenStaticResponse(
