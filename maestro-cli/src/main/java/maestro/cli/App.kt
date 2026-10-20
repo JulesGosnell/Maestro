@@ -43,6 +43,7 @@ import maestro.cli.insights.TestAnalysisManager
 import maestro.cli.update.Updates
 import maestro.cli.util.ChangeLogUtils
 import maestro.cli.util.ErrorReporter
+import maestro.cli.util.runMainExitingOnUncaught
 import maestro.cli.view.box
 import maestro.debuglog.DebugLogStore
 import picocli.AutoComplete.GenerateCompletion
@@ -112,10 +113,10 @@ private fun printVersion() {
     println(props["version"])
 }
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = runMainExitingOnUncaught(onUncaught = { Analytics.close() }) {
     // Disable icon in Mac dock
     // https://stackoverflow.com/a/17544259
-    try {
+    run { // artha#5049: a throwable escaping here exits the JVM (runMainExitingOnUncaught)
         System.setProperty("apple.awt.UIElement", "true")
         Analytics.warnAndEnableAnalyticsIfNotDisable()
 
@@ -190,8 +191,5 @@ fun main(args: Array<String>) {
 
         Analytics.close()
         exitProcess(exitCode)
-    } catch (e: Throwable) {
-        Analytics.close()
-        throw e
     }
 }
