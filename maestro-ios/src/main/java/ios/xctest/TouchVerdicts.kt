@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -81,6 +82,7 @@ class TouchVerdicts {
         private val SENDER_ID = Regex("senderID: 0x([0-9A-Fa-f]+)")
         private val SERVICE_ID = Regex("IOHIDService name: id:0x([0-9A-Fa-f]+)")
         private const val MAX_SESSIONS = 256
+        private const val GRACE_MS = 1000L
 
         const val PROPERTY = "maestro.tapDropResend"
 
@@ -125,9 +127,12 @@ class TouchVerdicts {
     }
 
     /**
-     * [command] (a `log stream`), fed line by line into [verdicts]. It runs under a shell that
-     * kills it when its stdin closes, so it ends with the JVM however the JVM ends (exit, an
-     * uncaught throwable's exitProcess, SIGKILL); [close] and a shutdown hook end it sooner.
+     * [command] (a `log stream`), fed line by line into [verdicts]. Two independent ways it ends
+     * with the JVM, so no exit leaves it behind on the host:
+     * - a shutdown hook runs [close] on exit, exitProcess (Maestro#4's uncaught path) and SIGTERM
+     *   (the sidecar's budget);
+     * - it runs under a shell that kills it when its stdin closes, which also covers SIGKILL,
+     *   where no hook runs.
      */
     class SimulatorStream(command: List<String>, name: String) : AutoCloseable {
         val verdicts = TouchVerdicts()
@@ -139,7 +144,8 @@ class TouchVerdicts {
         ).redirectErrorStream(true).start()
 
         private val ended = AtomicBoolean(false)
-        private val hook = Thread { close() }
+        private val closed = AtomicBoolean(false)
+        private val hook = Thread({ close() }, "touch-verdicts-shutdown-$name")
 
         init {
             Runtime.getRuntime().addShutdownHook(hook)
@@ -164,12 +170,16 @@ class TouchVerdicts {
             verdicts.send(now, tap, onDropped)
         }
 
+        /** Idempotent; also the shutdown hook. */
         override fun close() {
+            if (!closed.compareAndSet(false, true)) return
             ended.set(true)
-            // EOF on the shell's stdin is what kills the stream; destroying the shell first
-            // would orphan it
+            val tree = process.descendants().toList()
+            // EOF first: the shell then stops the stream itself
             process.outputStream.runCatching { close() }
-            if (!process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) process.destroy()
+            if (!process.waitFor(GRACE_MS, TimeUnit.MILLISECONDS)) process.destroyForcibly()
+            // whatever outlived the grace; SIGTERM, which simctl passes on to the in-sim `log`
+            tree.filter { it.isAlive }.forEach { it.destroy() }
             runCatching { Runtime.getRuntime().removeShutdownHook(hook) }
         }
     }

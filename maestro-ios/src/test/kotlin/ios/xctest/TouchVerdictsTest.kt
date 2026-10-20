@@ -198,6 +198,10 @@ class TouchVerdictsTest {
         assertThat(bad.droppedBetween(at, at)).contains("bad usage pair")
     }
 
+    /** A `sleep <n>` process itself — not a shell whose command line merely mentions it. */
+    private fun isSleep(p: ProcessHandle, n: String) =
+        p.info().command().orElse("").endsWith("/sleep") && p.info().arguments().orElse(emptyArray()).toList() == listOf(n)
+
     private fun stream(script: String) = TouchVerdicts.SimulatorStream(listOf("/bin/sh", "-c", script), name = "test")
 
     @Test
@@ -234,16 +238,16 @@ class TouchVerdictsTest {
     fun `lifecycle - close leaves no process behind`() {
         val s = stream("exec sleep 6011")
         val deadline = System.currentTimeMillis() + 10_000
-        while (ProcessHandle.current().descendants().noneMatch { it.info().commandLine().orElse("").contains("sleep 6011") } &&
+        while (ProcessHandle.current().descendants().noneMatch { isSleep(it, "6011") } &&
             System.currentTimeMillis() < deadline) Thread.sleep(20)
-        assertThat(ProcessHandle.current().descendants().anyMatch { it.info().commandLine().orElse("").contains("sleep 6011") }).isTrue()
+        assertThat(ProcessHandle.current().descendants().anyMatch { isSleep(it, "6011") }).isTrue()
 
         s.close()
 
         val gone = System.currentTimeMillis() + 10_000
-        while (ProcessHandle.allProcesses().anyMatch { it.info().commandLine().orElse("").contains("sleep 6011") } &&
+        while (ProcessHandle.allProcesses().anyMatch { isSleep(it, "6011") } &&
             System.currentTimeMillis() < gone) Thread.sleep(20)
-        assertThat(ProcessHandle.allProcesses().noneMatch { it.info().commandLine().orElse("").contains("sleep 6011") }).isTrue()
+        assertThat(ProcessHandle.allProcesses().noneMatch { isSleep(it, "6011") }).isTrue()
     }
 
     @Test
