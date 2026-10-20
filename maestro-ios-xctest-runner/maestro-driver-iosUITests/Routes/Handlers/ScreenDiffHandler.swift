@@ -3,6 +3,7 @@ import XCTest
 import CryptoKit
 import FlyingFox
 import os
+import MaestroDriverLib
 
 @MainActor
 struct IsScreenStaticHandler: HTTPHandler {
@@ -12,10 +13,15 @@ struct IsScreenStaticHandler: HTTPHandler {
     )
     
     func handleRequest(_ request: FlyingFox.HTTPRequest) async throws -> FlyingFox.HTTPResponse {
+        // artha#5049: ?threshold= is the fraction of pixels allowed to differ; absent, the upstream SHA test
+        let threshold = request.query["threshold"].flatMap { Double($0) } ?? 0
         do {
             let isScreenStatic = try catchingObjCException {
                 let screenshot1 = XCUIScreen.main.screenshot()
                 let screenshot2 = XCUIScreen.main.screenshot()
+                if threshold > 0, let frame1 = ScreenFrame.of(screenshot1), let frame2 = ScreenFrame.of(screenshot2) {
+                    return frame1.isStatic(comparedWith: frame2, threshold: threshold)
+                }
                 let hash1 = SHA256.hash(data: screenshot1.pngRepresentation)
                 let hash2 = SHA256.hash(data: screenshot2.pngRepresentation)
                 return hash1 == hash2
@@ -55,14 +61,26 @@ private struct ScreenFrame: Equatable {
     let width: Int
     let height: Int
     let bytesPerRow: Int
+    let bitsPerPixel: Int
     let bitmapInfo: UInt32
     let pixels: Data
 
     static func capture() -> ScreenFrame? {
-        let image = XCUIScreen.main.screenshot().image
-        guard let cg = image.cgImage, let data = cg.dataProvider?.data else { return nil }
+        of(XCUIScreen.main.screenshot())
+    }
+
+    static func of(_ screenshot: XCUIScreenshot) -> ScreenFrame? {
+        guard let cg = screenshot.image.cgImage, let data = cg.dataProvider?.data else { return nil }
         return ScreenFrame(width: cg.width, height: cg.height, bytesPerRow: cg.bytesPerRow,
-                           bitmapInfo: cg.bitmapInfo.rawValue, pixels: data as Data)
+                           bitsPerPixel: cg.bitsPerPixel, bitmapInfo: cg.bitmapInfo.rawValue, pixels: data as Data)
+    }
+
+    /// artha#5049: same layout, and at most `threshold` of the pixels differ (0: every pixel equal)
+    func isStatic(comparedWith other: ScreenFrame, threshold: Double) -> Bool {
+        guard width == other.width, height == other.height, bytesPerRow == other.bytesPerRow,
+              bitsPerPixel == other.bitsPerPixel, bitmapInfo == other.bitmapInfo else { return false }
+        return ScreenDiff.isStatic(pixels, other.pixels, width: width, height: height, bytesPerRow: bytesPerRow,
+                                   bytesPerPixel: bitsPerPixel / 8, threshold: threshold)
     }
 }
 
@@ -78,6 +96,7 @@ struct ScreenStaticHandler: HTTPHandler {
                 return AppError(type: .precondition, message: "timeoutMs is required").httpResponse
             }
             let timeoutMs = min(requested, ScreenStatic.maxTimeoutMs)
+            let threshold = (body["threshold"] as? NSNumber)?.doubleValue ?? 0
 
             let (isStatic, attempts, frames) = try catchingObjCException { () -> (Bool, Int, Int) in
                 var previous = ScreenFrame.capture()
@@ -88,7 +107,7 @@ struct ScreenStaticHandler: HTTPHandler {
                     frames += 1
                     if let p = previous, let c = current {
                         attempts += 1
-                        if p == c { return (true, attempts, frames) }
+                        if p.isStatic(comparedWith: c, threshold: threshold) { return (true, attempts, frames) }
                     }
                     previous = current
                 } while elapsedMs() < timeoutMs

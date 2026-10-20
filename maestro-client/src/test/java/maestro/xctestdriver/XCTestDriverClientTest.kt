@@ -6,12 +6,14 @@ import maestro.ios.MockXCTestInstaller
 import maestro.utils.network.XCUITestServerError
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import xcuitest.XCTestClient
+import xcuitest.IosStaticThreshold
 import xcuitest.XCTestDriverClient
 import xcuitest.api.DeviceInfo
 import xcuitest.api.Error
@@ -132,6 +134,59 @@ class XCTestDriverClientTest {
         } finally {
             mockWebServer.shutdown()
         }
+    }
+
+    private fun <T> against200(body: String, call: (XCTestDriverClient) -> T): Pair<T, RecordedRequest> {
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
+        mockWebServer.start(InetAddress.getByName("localhost"), 22087)
+        try {
+            val client = XCTestDriverClient(MockXCTestInstaller(MockXCTestInstaller.Simulator()), XCTestClient("localhost", 22087))
+            val result = call(client)
+            return result to mockWebServer.takeRequest()
+        } finally {
+            mockWebServer.shutdown()
+        }
+    }
+
+    private fun <T> withThreshold(value: String?, block: () -> T): T {
+        val previous = System.getProperty(IosStaticThreshold.PROPERTY)
+        if (value == null) System.clearProperty(IosStaticThreshold.PROPERTY) else System.setProperty(IosStaticThreshold.PROPERTY, value)
+        try {
+            return block()
+        } finally {
+            if (previous == null) System.clearProperty(IosStaticThreshold.PROPERTY) else System.setProperty(IosStaticThreshold.PROPERTY, previous)
+        }
+    }
+
+    @Test
+    fun `artha#5049 - isScreenStatic asks the runner for the default 0_05 percent threshold`() {
+        val (response, request) = withThreshold(null) { against200("""{"isScreenStatic":true}""") { it.isScreenStatic() } }
+        assertThat(response.isScreenStatic).isTrue()
+        assertThat(request.requestUrl!!.encodedPath).isEqualTo("/isScreenStatic")
+        assertThat(request.requestUrl!!.queryParameter("threshold")!!.toDouble()).isEqualTo(0.0005)
+    }
+
+    @Test
+    fun `artha#5049 - the -D flag sets the threshold, 0 restoring the exact comparison`() {
+        val (_, request) = withThreshold("0") { against200("""{"isScreenStatic":false}""") { it.isScreenStatic() } }
+        assertThat(request.requestUrl!!.queryParameter("threshold")!!.toDouble()).isEqualTo(0.0)
+    }
+
+    @Test
+    fun `artha#5049 - an unreadable threshold is the default`() {
+        assertThat(withThreshold("lots") { IosStaticThreshold.value() }).isEqualTo(IosStaticThreshold.DEFAULT)
+        assertThat(withThreshold("1.5") { IosStaticThreshold.value() }).isEqualTo(IosStaticThreshold.DEFAULT)
+    }
+
+    @Test
+    fun `artha#5049 - screenStatic carries the threshold in its body`() {
+        val (_, request) = withThreshold(null) {
+            against200("""{"isScreenStatic":true,"attempts":1,"frames":2,"elapsedMs":10}""") { it.screenStatic(3000) }
+        }
+        val body = jacksonObjectMapper().readTree(request.body.readUtf8())
+        assertThat(body["timeoutMs"].asLong()).isEqualTo(3000)
+        assertThat(body["threshold"].asDouble()).isEqualTo(0.0005)
     }
 
     @Test
