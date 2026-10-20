@@ -32,6 +32,8 @@ class SettleStats {
         var ms = 0L
         val mismatches = mutableListOf<Mismatch>()
         var lastEqualButLoading = false
+        /** artha#5049: dumps that missed (a TransientIssue) and were asked again */
+        var misses = 0
 
         fun toMap(): Map<String, Any> {
             val m = linkedMapOf<String, Any>(
@@ -41,6 +43,7 @@ class SettleStats {
                 "exit" to exit,
             )
             if (mismatches.isNotEmpty()) m["mis"] = mismatches.map { it.toMap() }
+            if (misses > 0) m["misses"] = misses
             return m
         }
     }

@@ -379,6 +379,9 @@ class XCTestDriverClient(
         val POLLED_READ_ONLY_PROBES: Map<String, String?> = mapOf(
             // the settle loop (ScreenStatic.iosSettleStatic) asks again until static or its timeout
             "isScreenStatic" to """{"isScreenStatic":false}""",
+            // artha#5049: the runner-side settle (fastStatic); ScreenStatic.iosSettleStatic falls
+            // back to the upstream isScreenStatic loop on a miss, as on any runner failure
+            "screenStatic" to null,
             // the near-side lookup; Maestro.findElementWithTimeout falls back to hierarchy polling
             "waitUntil" to null,
             // the hierarchy poll in Maestro.findElementWithTimeout asks again within its timeout

@@ -157,6 +157,34 @@ class XCTestDriverClientTest {
         assertThat(error.endpoint).isEqualTo("viewHierarchy")
     }
 
+    @Test
+    fun `artha#5049 - the CI kAXErrorInvalidUIElement viewHierarchy 500, verbatim, is a TransientIssue miss`() {
+        // run 39349667231, zeuglodon carer: the body as the runner sent it
+        val body = """{"errorMessage":"XCTest recorded an issue during \/viewHierarchy: Failed to resolve query: Failed to resolve remote element AX element pid: 17212, elementOrHash.elementID: 1506933048378721526.9999. (Underlying Error: Error kAXErrorInvalidUIElement getting snapshot for element <AXUIElementRef 0x600000c197d0> {pid=17212} {uid=[ID:9999 hash:0x14e9b39f98e904f6]})","code":"internal"}"""
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(body) { it.viewHierarchy(emptySet(), false) }
+        }
+        assertThat(error.endpoint).isEqualTo("viewHierarchy")
+    }
+
+    @Test
+    fun `artha#5049 - the CI isScreenStatic screenshot-timeout 500, verbatim, is not-static`() {
+        // run 39330293260, megalodon family
+        val body = """{"code":"internal","errorMessage":"XCTest recorded an issue during \/isScreenStatic: Failed to get screenshot: Timed out while requesting screenshot."}"""
+        val response = against500(body) { it.isScreenStatic() }
+        assertThat(response.isScreenStatic).isFalse()
+    }
+
+    @Test
+    fun `screenStatic 500 with the XCTest-issue marker is a TransientIssue miss, not an UnknownFailure`() {
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(issueBody("screenStatic", "Failed to get screenshot: Timed out while requesting screenshot.")) {
+                it.screenStatic(500)
+            }
+        }
+        assertThat(error.endpoint).isEqualTo("screenStatic")
+    }
+
     @ParameterizedTest
     @MethodSource("provideActions")
     fun `an ACTION 500 with the XCTest-issue marker is still fatal`(action: Action) {
