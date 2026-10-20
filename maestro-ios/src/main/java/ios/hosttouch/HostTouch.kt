@@ -174,6 +174,17 @@ class HostTouch(
         private fun f(v: Double) = "%.6f".format(java.util.Locale.ROOT, v)
 
         /**
+         * A gesture of a session with no HostTouch (mode=off, or a physical iPhone): [gesture], the
+         * XCTest call exactly as before, then the gesture's one log line, so a CI log shows the
+         * path of every gesture whatever the mode.
+         */
+        fun xctest(what: String, gesture: () -> Unit) {
+            val started = System.nanoTime()
+            gesture()
+            logger.info("[HostTouch] $what path=xctest mode=off took=${(System.nanoTime() - started) / 1_000_000}ms")
+        }
+
+        /**
          * -Dmaestro.iosHostTouch=on|off, default off: whether it is on, and where that came from,
          * for the session's one mode line. Anything but exactly "on" or "off" is off, and says so.
          */

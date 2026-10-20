@@ -45,7 +45,8 @@ What the log says (the driver log, `maestro.log`):
   as `... is neither on nor off, so OFF`.
 - per gesture: `[HostTouch] tap (x, y) hold=100ms path=host down->up=100.0ms ...`, or
   `path=xctest reason=...` when the host path could not take that gesture before sending anything
-  (point off screen, XCTest reporting a different screen size than the simulator's).
+  (point off screen, XCTest reporting a different screen size than the simulator's), or
+  `path=xctest mode=off` in a session with the flag off (and on a physical iPhone).
 - With the flag on, a helper that does not start **fails the session** with a message naming the
   flag; it never falls back to XCTest silently. A helper that fails after sending a gesture does
   not re-send it (it may have landed), logs `[DriverIssues]`, and later gestures use XCTest.

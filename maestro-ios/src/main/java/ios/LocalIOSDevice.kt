@@ -73,12 +73,14 @@ class LocalIOSDevice(
     }
 
     override fun tap(x: Int, y: Int) {
-        val host = hostTouch ?: return xcTestDevice.tap(x, y)
+        val host = hostTouch ?: return HostTouch.xctest("tap ($x, $y)") { xcTestDevice.tap(x, y) }
         host.tap(x, y, HostTouch.TAP_HOLD_MS) { xcTestDevice.tap(x, y) }
     }
 
     override fun longPress(x: Int, y: Int, durationMs: Long) {
-        val host = hostTouch ?: return xcTestDevice.longPress(x, y, durationMs)
+        val host = hostTouch ?: return HostTouch.xctest("longPress ($x, $y) hold=${durationMs}ms") {
+            xcTestDevice.longPress(x, y, durationMs)
+        }
         host.tap(x, y, durationMs) { xcTestDevice.longPress(x, y, durationMs) }
     }
 
@@ -97,7 +99,9 @@ class LocalIOSDevice(
         yEnd: Double,
         duration: Double
     ) {
-        val host = hostTouch ?: return xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration)
+        val host = hostTouch ?: return HostTouch.xctest(
+            "swipe (${xStart.toInt()}, ${yStart.toInt()})->(${xEnd.toInt()}, ${yEnd.toInt()}) move=${(duration * 1000).toLong()}ms"
+        ) { xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration) }
         host.swipe(xStart, yStart, xEnd, yEnd, (duration * 1000).toLong()) {
             xcTestDevice.scrollV2(xStart, yStart, xEnd, yEnd, duration)
         }
