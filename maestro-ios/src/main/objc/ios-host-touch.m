@@ -27,7 +27,9 @@
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #include <dlfcn.h>
+#include <mach/mach.h>
 #include <mach/mach_time.h>
+#include <mach/thread_policy.h>
 #include <objc/message.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -131,6 +133,20 @@ static void gesture(double x1, double y1, double x2, double y2, double holdMs, d
   reply("ok %.1f %.1f", absToMs(up - down), ackMs);
 }
 
+// The thread that times the gestures runs under the real-time (time-constraint) policy. Under
+// the default policy, even at QOS_CLASS_USER_INTERACTIVE, macOS coalesces timers: measured on a
+// build VM at load 8 of 24 CPUs, a 100 ms mach_wait_until woke a mean 16 ms and up to 147 ms
+// late, which turns a tap into a long press. Under this policy: mean 0.02 ms, worst 0.05 ms.
+static void realTime(void) {
+  double msToAbs = 1e6 * timebase.denom / timebase.numer;
+  thread_time_constraint_policy_data_t policy = {
+    .period = 0, .computation = (uint32_t)(1 * msToAbs), .constraint = (uint32_t)(5 * msToAbs), .preemptible = 1,
+  };
+  kern_return_t kr = thread_policy_set(mach_thread_self(), THREAD_TIME_CONSTRAINT_POLICY,
+                                       (thread_policy_t)&policy, THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+  if (kr != KERN_SUCCESS) fprintf(stderr, "ios-host-touch: no real-time policy (%d); timing may stretch\n", kr);
+}
+
 static int fail(int code, NSString *why) {
   reply("fail %s", why.UTF8String);
   return code;
@@ -141,6 +157,7 @@ int main(int argc, char **argv) {
     if (argc != 2) return fail(2, @"usage: ios-host-touch <udid>");
     mach_timebase_info(&timebase);
     pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    realTime();
 
     const char *env = getenv("DEVELOPER_DIR");
     NSString *developer = @(env && *env ? env : DEVELOPER_DIR);
