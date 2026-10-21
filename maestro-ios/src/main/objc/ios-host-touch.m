@@ -15,7 +15,8 @@
 //                 | "fail <reason>" (exit != 0)
 //   stdin, one command per line; coordinates are FRACTIONS (0..1) of the PORTRAIT screen:
 //     tap   X Y HOLD_MS                        down, hold, up
-//     swipe X1 Y1 X2 Y2 HOLD_MS MOVE_MS         down at 1, hold, move to 2 over MOVE_MS, up at 2
+//     swipe X1 Y1 X2 Y2 HOLD_MS MOVE_MS         down at 1, hold, move to 2 over MOVE_MS along
+//                                               XCTest's swipe profile (moveProgress), up at 2
 //     ping
 //   reply, one line per command:
 //     "ok <down_to_up_ms> <ack_ms>"
@@ -28,6 +29,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #include <dlfcn.h>
+#include <math.h>
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #include <mach/thread_policy.h>
@@ -108,6 +110,14 @@ static void reply(const char *fmt, ...) {
   fflush(stdout);
 }
 
+// How far along a swipe's move the finger is at fraction [f] of MOVE_MS. XCTest's synthesized swipe
+// does not move linearly: measured from backboardd on 5 stock Maestro swipes (iOS 26.3 sim), it is
+// this blend of linear and cosine ease (RMS error 0.012 of the distance; plain linear 0.025). The
+// shape matters at the END: it releases at 0.7x the mean speed, where linear releases at 1x, and a
+// UIScrollView flings in proportion to the release speed (smithr#1313 visit-full-tasks: a linear
+// swipe scrolled 505 pt where XCTest's scrolled 406 pt, so rows landed somewhere else).
+static double moveProgress(double f) { return 0.7 * f + 0.3 * (1 - cos(M_PI * f)) / 2; }
+
 // Down at (x1, y1), held HOLD_MS, moved to (x2, y2) over MOVE_MS, up there. Every step waits for
 // an ABSOLUTE deadline from the down, so a late wake-up is not carried into the next step and
 // the up is sent when it was asked for, however busy the machine.
@@ -121,9 +131,9 @@ static void gesture(double x1, double y1, double x2, double y2, double holdMs, d
   if (steps < 1 && moveMs > 0) steps = 1;
   mach_wait_until(down + nsToAbs(holdMs * 1e6));
   for (int i = 1; i <= steps; i++) {
-    double f = (double)i / steps;
+    double f = (double)i / steps, p = moveProgress(f);
     mach_wait_until(down + nsToAbs((holdMs + moveMs * f) * 1e6));
-    if (send1(x1 + (x2 - x1) * f, y1 + (y2 - y1) * f, DOWN)) sent++;
+    if (send1(x1 + (x2 - x1) * p, y1 + (y2 - y1) * p, DOWN)) sent++;
   }
   uint64_t up = send1(x2, y2, UP);
   if (!up) { reply("err cannot build the up; the touch may still be down"); return; }

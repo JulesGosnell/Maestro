@@ -56,9 +56,9 @@ class HostTouchTest {
     }
 
     @Test
-    fun `a swipe holds 100 ms, then moves for its duration`() {
+    fun `a swipe moves from the down, for 100 ms plus its duration, as XCTest's does`() {
         hostTouch("ok").swipe(195.0, 633.0, 195.0, 211.0, 333) { error("not XCTest") }
-        assertThat(sent()).containsExactly("swipe 0.500000 0.750000 0.500000 0.250000 100 333")
+        assertThat(sent()).containsExactly("swipe 0.500000 0.750000 0.500000 0.250000 0 433")
     }
 
     @Test

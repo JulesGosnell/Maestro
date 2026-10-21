@@ -68,10 +68,18 @@ class HostTouch(
         }
     }
 
+    /**
+     * A swipe the way XCTest's EventRecord.addSwipeEvent lands it, measured from backboardd: the
+     * finger starts moving at the down, with NO hold, and moves for [TAP_HOLD_MS] + [durationMs]
+     * (the helper's move follows XCTest's speed profile too). A swipe that holds first and then
+     * moves for [durationMs] covers the same distance faster, releases faster, and a scroll view
+     * flings further: 505 pt against XCTest's 406 pt for the same swipe (smithr#1313).
+     */
     fun swipe(xStart: Double, yStart: Double, xEnd: Double, yEnd: Double, durationMs: Long, stock: () -> Unit) {
         val what = "swipe (${xStart.toInt()}, ${yStart.toInt()})->(${xEnd.toInt()}, ${yEnd.toInt()}) move=${durationMs}ms"
+        val moveMs = TAP_HOLD_MS + durationMs
         route(what, xStart, yStart, xEnd, yEnd, stock) { a, b ->
-            "swipe ${f(a.first)} ${f(a.second)} ${f(b.first)} ${f(b.second)} $TAP_HOLD_MS $durationMs" to TAP_HOLD_MS + durationMs
+            "swipe ${f(a.first)} ${f(a.second)} ${f(b.first)} ${f(b.second)} 0 $moveMs" to moveMs
         }
     }
 
@@ -165,7 +173,10 @@ class HostTouch(
         /** A different helper binary, for development; the switch must still be on. */
         const val HELPER_PROPERTY = "maestro.iosHostTouch.helper"
 
-        /** XCTest's own tap hold (EventRecord.defaultTapDuration), and its swipe's initial hold. */
+        /**
+         * XCTest's own tap hold (EventRecord.defaultTapDuration). In a swipe XCTest adds it to the
+         * move, not as a hold before it: see [swipe].
+         */
         const val TAP_HOLD_MS = 100L
 
         /** Beyond the gesture's own length, how long an answer may take before it counts as lost. */
