@@ -76,4 +76,23 @@ class DriverIssueMissTest {
         assertThat(result).isNotNull()
         verify(exactly = 1) { driver.queryOnDeviceElements(ofType<OnDeviceElementQuery.NearSide>()) }
     }
+
+    @Test
+    fun `smithr#1334 - a near-side miss followed by misses until the timeout fails at the timeout, not later`() {
+        // the app really gone, or a guest starved for the whole budget: bounded by the lookup's own timeout
+        val driver = driver()
+        every { driver.queryOnDeviceElements(ofType<OnDeviceElementQuery.NearSide>()) } throws
+            XCUITestServerError.TransientIssue("waitUntil", """{"ok":false,"reason":"driverError"}""")
+        every { driver.contentDescriptor(any()) } throws miss
+
+        val start = System.currentTimeMillis()
+        assertThrows<XCUITestServerError.TransientIssue> {
+            Maestro(driver).findElementWithTimeout(
+                timeoutMs = 500,
+                filter = byId,
+                nearSide = NearSideSelector(idRegex = "button-continue"),
+            )
+        }
+        assertThat(System.currentTimeMillis() - start).isLessThan(3_000L)
+    }
 }

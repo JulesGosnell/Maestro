@@ -213,6 +213,95 @@ class XCTestDriverClientTest {
         }
     }
 
+    // ── smithr#1334: the near-side driverError and the unknowBundleId 500 on a polled probe are misses ──
+
+    /** CI run 39938290433, carer iOS sim, 00-login.yaml: the /waitUntil body as the runner sent it. */
+    private val ciWaitUntilDriverError =
+        """{"ok":false,"reason":"driverError","detail":"The operation couldn’t be completed. (maestro_driver_iosUITests.AppError error 1.)"}"""
+
+    /** The same failure once AppError is a LocalizedError: the runner's real message survives. */
+    private val waitUntilDriverErrorWithMessage =
+        """{"ok":false,"reason":"driverError","detail":"Application unknowBundleId is not running"}"""
+
+    /** /viewHierarchy's answer to the same blip (ViewHierarchyHandler returns the AppError as is). */
+    private val viewHierarchyUnknownBundleId = jacksonObjectMapper().writeValueAsString(
+        Error(errorMessage = "Application unknowBundleId is not running", errorCode = "internal")
+    )
+
+    @Test
+    fun `smithr#1334 - the CI waitUntil driverError 500, verbatim, is a TransientIssue miss, not an UnknownFailure`() {
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(ciWaitUntilDriverError) { it.nearSideWaitUntil(aWaitUntil()) }
+        }
+        assertThat(error.endpoint).isEqualTo("waitUntil")
+    }
+
+    @Test
+    fun `smithr#1334 - a waitUntil driverError carrying the runner's message is a TransientIssue miss`() {
+        assertThrows<XCUITestServerError.TransientIssue> {
+            against500(waitUntilDriverErrorWithMessage) { it.nearSideWaitUntil(aWaitUntil()) }
+        }
+    }
+
+    @Test
+    fun `smithr#1334 - viewHierarchy 500 unknowBundleId is a TransientIssue miss, not an AppCrash`() {
+        val error = assertThrows<XCUITestServerError.TransientIssue> {
+            against500(viewHierarchyUnknownBundleId) { it.viewHierarchy(emptySet(), false) }
+        }
+        assertThat(error.endpoint).isEqualTo("viewHierarchy")
+    }
+
+    @Test
+    fun `smithr#1334 - isScreenStatic 500 unknowBundleId is not-static, not a throw`() {
+        val response = against500(viewHierarchyUnknownBundleId) { it.isScreenStatic() }
+        assertThat(response.isScreenStatic).isFalse()
+    }
+
+    @Test
+    fun `smithr#1334 - a REAL app that is not running is still an AppCrash on a probe`() {
+        val body = jacksonObjectMapper().writeValueAsString(
+            Error(errorMessage = "Application care.artha.carer is not running", errorCode = "internal")
+        )
+        assertThrows<XCUITestServerError.AppCrash> {
+            against500(body) { it.viewHierarchy(emptySet(), false) }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideActions")
+    fun `smithr#1334 - an ACTION 500 with the near-side driverError shape is still fatal`(action: Action) {
+        assertThrows<XCUITestServerError.UnknownFailure> {
+            against500(ciWaitUntilDriverError) { action.call(it) }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideActions")
+    fun `smithr#1334 - an ACTION 500 unknowBundleId is never a miss - it keeps its crash classification`(action: Action) {
+        assertThrows<XCUITestServerError.AppCrash> {
+            against500(viewHierarchyUnknownBundleId) { action.call(it) }
+        }
+    }
+
+    @Test
+    fun `smithr#1334 - every transient miss is counted`() {
+        val mockWebServer = MockWebServer()
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody(ciWaitUntilDriverError))
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody(viewHierarchyUnknownBundleId))
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody(issueBody("isScreenStatic")))
+        mockWebServer.start(InetAddress.getByName("localhost"), 22087)
+        try {
+            val client = XCTestDriverClient(MockXCTestInstaller(MockXCTestInstaller.Simulator()), XCTestClient("localhost", 22087))
+            assertThat(client.transientMissCount).isEqualTo(0)
+            assertThrows<XCUITestServerError.TransientIssue> { client.nearSideWaitUntil(aWaitUntil()) }
+            assertThrows<XCUITestServerError.TransientIssue> { client.viewHierarchy(emptySet(), false) }
+            client.isScreenStatic()
+            assertThat(client.transientMissCount).isEqualTo(3)
+        } finally {
+            mockWebServer.shutdown()
+        }
+    }
+
     class Action(val endpoint: String, val call: (XCTestDriverClient) -> Any?) {
         override fun toString() = endpoint
     }

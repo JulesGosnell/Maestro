@@ -9,6 +9,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicInteger
 import xcuitest.api.*
 import xcuitest.installer.XCTestInstaller
 import kotlin.time.Duration.Companion.seconds
@@ -289,22 +290,39 @@ class XCTestDriverClient(
         }
     }
 
+    /** smithr#1334: transient misses absorbed so far by this client, so a starved host stays visible. */
+    private val transientMisses = AtomicInteger()
+    val transientMissCount: Int get() = transientMisses.get()
+
     /**
-     * Maestro#3: the ONE place a 500 "XCTest recorded an issue during /<endpoint>" (artha#5055)
-     * is classified. On a read-only probe in [POLLED_READ_ONLY_PROBES] it is a transient MISS:
-     * the probe's natural negative answer when it has a safe one, else a
-     * [XCUITestServerError.TransientIssue] for the polling caller to absorb. On anything else
-     * (actions, and any 500 without the marker) this returns null and the 500 stays fatal.
-     * Called only where the 500 would otherwise be an UnknownFailure: timeouts, 4xx and app
-     * crashes keep their own classification.
+     * Maestro#3: the ONE place a 500 on a polled read-only probe is classified as a transient MISS.
+     * On a probe in [POLLED_READ_ONLY_PROBES] a 500 is a miss when [missReason] names why: the
+     * probe's natural negative answer when it has a safe one, else a
+     * [XCUITestServerError.TransientIssue] for the polling caller to absorb within its own timeout.
+     * On anything else (actions, and any 500 without a known miss shape) this returns null and
+     * the 500 stays fatal. Every miss is logged with a running count.
      */
     private fun transientIssueMiss(code: Int, pathString: String, responseBodyAsString: String): String? {
-        if (code != 500 || XCTEST_ISSUE_MARKER !in responseBodyAsString) return null
-        if (pathString !in POLLED_READ_ONLY_PROBES) return null
+        val reason = missReason(code, pathString, responseBodyAsString) ?: return null
 
-        logger.warn("[DriverIssues] absorbed transient issue on /$pathString as a miss; the caller keeps polling. body: $responseBodyAsString")
+        val n = transientMisses.incrementAndGet()
+        logger.warn("[DriverIssues] transient miss #$n on /$pathString ($reason): absorbed as a miss; the caller asks again within its own timeout. body: $responseBodyAsString")
         return POLLED_READ_ONLY_PROBES.getValue(pathString)
             ?: throw XCUITestServerError.TransientIssue(pathString, responseBodyAsString)
+    }
+
+    /** Why a 500 on a polled read-only probe is a miss, or null when it is not one. */
+    private fun missReason(code: Int, pathString: String, responseBodyAsString: String): String? {
+        if (code != 500 || pathString !in POLLED_READ_ONLY_PROBES) return null
+        return when {
+            // smithr#1334: the runner's bundle-ID lookup for the foreground app timed out (1 s)
+            UNKNOWN_BUNDLE_ID_MARKER in responseBodyAsString -> "the runner's bundle-ID lookup timed out"
+            // artha#5055 / Maestro#3
+            XCTEST_ISSUE_MARKER in responseBodyAsString -> "XCTest recorded an issue"
+            // smithr#1334: the near-side handler's own catch-all; the runner could not read the tree
+            NEAR_SIDE_DRIVER_ERROR_MARKER in responseBodyAsString -> "near-side driverError"
+            else -> null
+        }
     }
 
     private fun handleExceptions(
@@ -317,6 +335,12 @@ class XCTestDriverClient(
             mapper.readValue(responseBodyAsString, Error::class.java)
         } catch (_: JsonProcessingException) {
             Error("Unable to parse error", "unknown")
+        }
+        // smithr#1334: "Application unknowBundleId is not running" is the runner failing to name the
+        // foreground app in time, not the app stopping; the crash branches below would read it as
+        // an AppCrash. On a polled read-only probe it is a miss; anywhere else it falls through.
+        if (UNKNOWN_BUNDLE_ID_MARKER in responseBodyAsString) {
+            transientIssueMiss(code, pathString, responseBodyAsString)?.let { return it }
         }
         when {
             code == 408 -> {
@@ -368,6 +392,21 @@ class XCTestDriverClient(
     companion object {
         /** The runner's 500 body for a request during which XCTest recorded an issue (artha#5055). */
         const val XCTEST_ISSUE_MARKER = "XCTest recorded an issue"
+
+        /**
+         * smithr#1334: the near-side handlers' (/waitUntil) answer to ANY error the runner threw
+         * while reading the tree, e.g. an AppError, whose `localizedDescription` the runner sends
+         * as "The operation couldn't be completed. (maestro_driver_iosUITests.AppError error 1.)".
+         * A request the runner could not answer, never an answer: CI run 39938290433.
+         */
+        const val NEAR_SIDE_DRIVER_ERROR_MARKER = "\"reason\":\"driverError\""
+
+        /**
+         * smithr#1334: the bundle ID the runner substitutes when its 1 s request for the foreground
+         * process's bundle ID gets no reply (XCUIApplication+Helper.m), so the foreground app it
+         * then asks for "is not running". Seen on a CPU-starved guest; the app was running.
+         */
+        const val UNKNOWN_BUNDLE_ID_MARKER = "Application unknowBundleId is not running"
 
         /**
          * Maestro#3: idempotent, read-only probes that their callers ALREADY poll inside a timeout,

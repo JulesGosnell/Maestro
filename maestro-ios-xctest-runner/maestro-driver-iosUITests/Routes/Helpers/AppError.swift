@@ -35,3 +35,11 @@ struct AppError: Error, Codable {
         case message = "errorMessage"
     }
 }
+
+// smithr#1334: without this, an AppError's localizedDescription is Foundation's generic
+// "The operation couldn't be completed. (maestro_driver_iosUITests.AppError error 1.)" (1 is the
+// code Swift gives every non-enum Error) and the message is lost wherever a handler reports
+// error.localizedDescription, as the near-side /waitUntil driverError does.
+extension AppError: LocalizedError {
+    var errorDescription: String? { message }
+}
