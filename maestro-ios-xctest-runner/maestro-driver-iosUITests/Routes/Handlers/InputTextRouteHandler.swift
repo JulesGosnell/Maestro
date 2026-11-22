@@ -17,13 +17,17 @@ struct InputTextRouteHandler : HTTPHandler {
         do {
             let start = Date()
             
-            try await TextInputHelper.waitUntilKeyboardIsPresented()
-            
+            // TextInputSequence waits once for keyboard + focus itself; no separate keyboard wait.
             try await TextInputHelper.inputText(requestBody.text)
 
             let duration = Date().timeIntervalSince(start)
             logger.info("Text input duration took \(duration)")
             return HTTPResponse(statusCode: .ok)
+        } catch let error as AppError {
+            // Its message names the failure (keyboard detached, no focused field). Wrapping it in
+            // localizedDescription would replace that with "The operation couldn't be completed".
+            logger.error("\(error.message)")
+            return error.httpResponse
         } catch {
             return AppError(message: "Error inputting text: \(error.localizedDescription)").httpResponse
         }
