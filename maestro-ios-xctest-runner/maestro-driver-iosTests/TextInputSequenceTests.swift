@@ -1,66 +1,95 @@
 import XCTest
 
-/// #4733: the first character makes the keyboard reconfigure, and keys arriving before that ends
-/// are dropped. Under load it took longer than the fixed 500 ms the runner used to sleep, and a
-/// sign-in typed "cnified-…" with 7 characters missing.
+/// smithr 2026-11-22 (run 45038422797): inputText typed one character, then queried the app's
+/// main thread for the focused field; under load that query took 6.6 s, iOS's keyboard arbiter
+/// disconnected the app, and 25 characters of a password were silently typed into nothing.
+/// Now: wait once for keyboard + focus, type everything in one call, look again only afterwards,
+/// and a detached keyboard fails by name. No retry.
 @MainActor
 final class TextInputSequenceTests: XCTestCase {
 
-    func testTheRestWaitsUntilTheFirstCharacterHasLanded() async throws {
-        let field = SlowKeyboardField(reconfigure: 0.8)
-        try await type("cnified-carer@demo.artha.care", into: field)
-        XCTAssertEqual(field.keptValue, "cnified-carer@demo.artha.care")
+    private let ready = TextInputState(keyboardAttached: true, focusedFieldValue: "")
+
+    func testTheWholeStringIsOneSendWithNoReadWhileTyping() async throws {
+        let screen = Screen([ready, ready])
+        try await type("unified-carer-password-1234", on: screen)
+        XCTAssertEqual(screen.events, ["read", "send unified-carer-password-1234 @\(TextInputSequence.typingSpeed)", "read"])
     }
 
-    func testAFirstCharacterThatNeverLandsFailsLoudlyAndSendsNothingMore() async throws {
-        let field = SlowKeyboardField(reconfigure: 10)
+    func testItWaitsOnceForKeyboardAndFocusThenTypes() async throws {
+        let screen = Screen([
+            TextInputState(keyboardAttached: false, focusedFieldValue: nil),
+            TextInputState(keyboardAttached: true, focusedFieldValue: nil),
+            ready,
+            ready,
+        ])
+        try await type("abc", on: screen)
+        XCTAssertEqual(screen.events, ["read", "sleep", "read", "sleep", "read", "send abc @\(TextInputSequence.typingSpeed)", "read"])
+    }
+
+    func testNoKeyboardFailsByNameAndTypesNothing() async throws {
+        let screen = Screen([TextInputState(keyboardAttached: false, focusedFieldValue: "")])
+        let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
+        XCTAssertTrue(message.contains("NO KEYBOARD"), message)
+        XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
+    }
+
+    func testNoFocusedFieldFailsByNameAndTypesNothing() async throws {
+        let screen = Screen([TextInputState(keyboardAttached: true, focusedFieldValue: nil)])
+        let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
+        XCTAssertTrue(message.contains("NO FOCUSED FIELD"), message)
+        XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
+    }
+
+    func testAKeyboardThatDetachesWhileTypingFailsByNameAndIsNotRetried() async throws {
+        let screen = Screen([ready, TextInputState(keyboardAttached: false, focusedFieldValue: "u")])
+        let message = try await failure { try await self.type("unified-carer-password-1234", on: screen) }
+        XCTAssertTrue(message.contains("KEYBOARD DETACHED"), message)
+        XCTAssertEqual(screen.events.filter { $0.hasPrefix("send") }.count, 1)
+    }
+
+    func testAFieldThatLosesFocusWhileTypingFailsByName() async throws {
+        let screen = Screen([ready, TextInputState(keyboardAttached: true, focusedFieldValue: nil)])
+        let message = try await failure { try await self.type("abc", on: screen) }
+        XCTAssertTrue(message.contains("LOST KEYBOARD FOCUS"), message)
+    }
+
+    func testEmptyTextDoesNothing() async throws {
+        let screen = Screen([])
+        try await type("", on: screen)
+        XCTAssertEqual(screen.events, [])
+    }
+
+    private func type(_ text: String, on screen: Screen, timeout: TimeInterval = TextInputSequence.readyTimeout) async throws {
+        try await TextInputSequence.type(
+            text,
+            timeout: timeout,
+            state: { screen.read() },
+            send: { keys, speed in screen.events.append("send \(keys) @\(speed)") },
+            sleep: { _ in screen.events.append("sleep"); try await Task.sleep(nanoseconds: 10_000_000) })
+    }
+
+    private func failure(_ body: () async throws -> Void) async throws -> String {
         do {
-            try await type("fnified", into: field, timeout: 0.5)
-            XCTFail("typing succeeded although the first character never landed")
+            try await body()
         } catch let error as AppError {
-            XCTAssertTrue(error.message.contains("did not reach the focused field"), error.message)
+            return error.message
         }
-        XCTAssertEqual(field.received, ["f"])
-    }
-
-    func testNoFocusedFieldFailsBeforeTyping() async throws {
-        do {
-            try await TextInputSequence.type("x", fieldValue: { nil }, send: { _, _ in XCTFail("sent a key") })
-            XCTFail("typing succeeded with no focused field")
-        } catch is AppError {}
-    }
-
-    private func type(_ text: String, into field: SlowKeyboardField, timeout: TimeInterval = TextInputSequence.firstCharacterTimeout) async throws {
-        try await TextInputSequence.type(text, timeout: timeout, fieldValue: { field.value }, send: { keys, _ in field.send(keys) })
+        XCTFail("expected an AppError")
+        return ""
     }
 }
 
-/// A field as iOS behaves under load: the first key starts a keyboard reconfigure lasting
-/// `reconfigure` seconds, keys arriving meanwhile are lost, and the first character appears in
-/// the value only when it ends.
+/// A scripted screen: each read returns the next state; the last one repeats.
 @MainActor
-private final class SlowKeyboardField {
-    private let reconfigure: TimeInterval
-    private var typed = ""
-    private var busyUntil: Date?
-    private(set) var received: [String] = []
+private final class Screen {
+    private var states: [TextInputState]
+    var events: [String] = []
 
-    init(reconfigure: TimeInterval) {
-        self.reconfigure = reconfigure
-    }
+    init(_ states: [TextInputState]) { self.states = states }
 
-    /// What the field ends up holding, once any reconfigure is over.
-    var keptValue: String { typed }
-
-    var value: String {
-        guard let busyUntil, Date() < busyUntil else { return typed }
-        return ""
-    }
-
-    func send(_ keys: String) {
-        received.append(keys)
-        if let busyUntil, Date() < busyUntil { return }
-        if typed.isEmpty { busyUntil = Date().addingTimeInterval(reconfigure) }
-        typed += keys
+    func read() -> TextInputState {
+        events.append("read")
+        return states.count > 1 ? states.removeFirst() : states[0]
     }
 }

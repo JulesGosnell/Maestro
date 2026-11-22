@@ -27,7 +27,7 @@ struct TextInputHelper {
     }
 
     static func inputText(_ text: String) async throws {
-        try await TextInputSequence.type(text, fieldValue: focusedFieldValue, send: typeKeys)
+        try await TextInputSequence.type(text, state: inputState, send: typeKeys)
     }
 
     /// Erasing keeps a fixed pause after the first delete: a delete in an already empty field
@@ -55,15 +55,18 @@ struct TextInputHelper {
         try await RunnerDaemonProxy().synthesize(eventRecord: eventRecord)
     }
 
-    /// The value of the field holding keyboard focus; nil when no field has it.
-    private static func focusedFieldValue() throws -> String? {
+    /// Whether a keyboard is attached (present with a non-empty frame: after a keyboard-arbiter
+    /// disconnect it is left at size 0), and the value of the field holding keyboard focus.
+    private static func inputState() throws -> TextInputState {
         try catchingObjCException {
             let app = RunningApp.getForegroundApp() ?? XCUIApplication(bundleIdentifier: RunningApp.springboardBundleId)
+            let keyboard = try? app.keyboards.firstMatch.snapshot()
+            let keyboardAttached = keyboard.map { !$0.frame.isEmpty } ?? false
             let focused = app.descendants(matching: .any)
                 .matching(NSPredicate(format: "hasKeyboardFocus == true"))
                 .firstMatch
-            guard let snapshot = try? focused.snapshot() else { return nil }
-            return snapshot.value as? String ?? ""
+            let value = (try? focused.snapshot()).map { $0.value as? String ?? "" }
+            return TextInputState(keyboardAttached: keyboardAttached, focusedFieldValue: value)
         }
     }
 }
