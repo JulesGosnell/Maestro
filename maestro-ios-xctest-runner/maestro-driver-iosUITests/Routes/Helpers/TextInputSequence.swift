@@ -4,10 +4,25 @@ import Foundation
 /// any) holds keyboard focus.
 struct TextInputState {
     let keyboardAttached: Bool
-    /// The focused field's value; nil when no field has keyboard focus.
-    let focusedFieldValue: String?
+    /// The field holding keyboard focus; nil when there is none.
+    let focused: FocusedField?
 
-    var ready: Bool { keyboardAttached && focusedFieldValue != nil }
+    var ready: Bool { keyboardAttached && focused != nil }
+}
+
+struct FocusedField {
+    /// Its value as a string; nil when unreadable. An EMPTY field reports its placeholder here,
+    /// which is why `empty` is separate.
+    let value: String?
+    /// Holds no text (value empty, or equal to the placeholder).
+    let empty: Bool
+    let secure: Bool
+
+    init(value: String?, empty: Bool = false, secure: Bool = false) {
+        self.value = value
+        self.empty = empty
+        self.secure = secure
+    }
 }
 
 /// Types text in ONE synthesized event, with NO query of the app while it is being typed.
@@ -23,7 +38,9 @@ struct TextInputState {
 ///   1. wait ONCE (bounded) until a keyboard is attached AND a field has focus — else fail by name;
 ///   2. type the whole string in one call;
 ///   3. look once more AFTER typing: a keyboard that detached, or a field that lost focus, fails
-///      BY NAME. Never retried — a retry would type into a field of unknown content.
+///      BY NAME; so does a field that was empty, is not secure, and now holds FEWER characters
+///      than were typed (dropped keys). Fewer, not different: a formatting field (phone mask)
+///      may add characters. Never retried — a retry would type into a field of unknown content.
 @MainActor
 struct TextInputSequence {
     static let readyTimeout: TimeInterval = 3
@@ -57,14 +74,18 @@ struct TextInputSequence {
         if !after.keyboardAttached {
             throw AppError(message: "inputText: KEYBOARD DETACHED while typing \(text.count) characters — some or all of them were not typed (under load iOS's keyboard arbiter disconnects an app that does not answer in time). Not retried.")
         }
-        if after.focusedFieldValue == nil {
+        guard let field = after.focused else {
             throw AppError(message: "inputText: the field LOST KEYBOARD FOCUS while typing \(text.count) characters — some or all of them were not typed. Not retried.")
+        }
+        if let wasEmpty = before.focused?.empty, wasEmpty, !field.secure, let value = field.value,
+           value.count < text.count {
+            throw AppError(message: "inputText: CHARACTERS DROPPED — typed \(text.count) characters into an empty field, it holds \(value.count). Not retried.")
         }
     }
 
     private static func notReadyMessage(_ s: TextInputState, timeout: TimeInterval, count: Int) -> String {
         let missing: String
-        switch (s.keyboardAttached, s.focusedFieldValue != nil) {
+        switch (s.keyboardAttached, s.focused != nil) {
         case (false, false): missing = "NO KEYBOARD attached and NO FOCUSED FIELD"
         case (false, true): missing = "NO KEYBOARD attached"
         default: missing = "NO FOCUSED FIELD"

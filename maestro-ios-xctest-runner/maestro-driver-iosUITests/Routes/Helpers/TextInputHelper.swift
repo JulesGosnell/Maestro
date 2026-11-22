@@ -65,8 +65,12 @@ struct TextInputHelper {
             let focused = app.descendants(matching: .any)
                 .matching(NSPredicate(format: "hasKeyboardFocus == true"))
                 .firstMatch
-            let value = (try? focused.snapshot()).map { $0.value as? String ?? "" }
-            return TextInputState(keyboardAttached: keyboardAttached, focusedFieldValue: value)
+            let field = (try? focused.snapshot()).map { snapshot -> FocusedField in
+                let value = snapshot.value as? String
+                let empty = value == "" || (value != nil && value == snapshot.placeholderValue)
+                return FocusedField(value: value, empty: empty, secure: snapshot.elementType == .secureTextField)
+            }
+            return TextInputState(keyboardAttached: keyboardAttached, focused: field)
         }
     }
 }

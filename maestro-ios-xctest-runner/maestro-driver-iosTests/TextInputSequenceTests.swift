@@ -8,7 +8,7 @@ import XCTest
 @MainActor
 final class TextInputSequenceTests: XCTestCase {
 
-    private let ready = TextInputState(keyboardAttached: true, focusedFieldValue: "")
+    private let ready = TextInputState(keyboardAttached: true, focused: FocusedField(value: ""))
 
     func testTheWholeStringIsOneSendWithNoReadWhileTyping() async throws {
         let screen = Screen([ready, ready])
@@ -18,8 +18,8 @@ final class TextInputSequenceTests: XCTestCase {
 
     func testItWaitsOnceForKeyboardAndFocusThenTypes() async throws {
         let screen = Screen([
-            TextInputState(keyboardAttached: false, focusedFieldValue: nil),
-            TextInputState(keyboardAttached: true, focusedFieldValue: nil),
+            TextInputState(keyboardAttached: false, focused: nil),
+            TextInputState(keyboardAttached: true, focused: nil),
             ready,
             ready,
         ])
@@ -28,36 +28,73 @@ final class TextInputSequenceTests: XCTestCase {
     }
 
     func testNoKeyboardFailsByNameAndTypesNothing() async throws {
-        let screen = Screen([TextInputState(keyboardAttached: false, focusedFieldValue: "")])
+        let screen = Screen([TextInputState(keyboardAttached: false, focused: FocusedField(value: ""))])
         let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
         XCTAssertTrue(message.contains("NO KEYBOARD"), message)
         XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
     }
 
     func testNoFocusedFieldFailsByNameAndTypesNothing() async throws {
-        let screen = Screen([TextInputState(keyboardAttached: true, focusedFieldValue: nil)])
+        let screen = Screen([TextInputState(keyboardAttached: true, focused: nil)])
         let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
         XCTAssertTrue(message.contains("NO FOCUSED FIELD"), message)
         XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
     }
 
     func testAKeyboardThatDetachesWhileTypingFailsByNameAndIsNotRetried() async throws {
-        let screen = Screen([ready, TextInputState(keyboardAttached: false, focusedFieldValue: "u")])
+        let screen = Screen([ready, TextInputState(keyboardAttached: false, focused: FocusedField(value: "u"))])
         let message = try await failure { try await self.type("unified-carer-password-1234", on: screen) }
         XCTAssertTrue(message.contains("KEYBOARD DETACHED"), message)
         XCTAssertEqual(screen.events.filter { $0.hasPrefix("send") }.count, 1)
     }
 
     func testAFieldThatLosesFocusWhileTypingFailsByName() async throws {
-        let screen = Screen([ready, TextInputState(keyboardAttached: true, focusedFieldValue: nil)])
+        let screen = Screen([ready, TextInputState(keyboardAttached: true, focused: nil)])
         let message = try await failure { try await self.type("abc", on: screen) }
         XCTAssertTrue(message.contains("LOST KEYBOARD FOCUS"), message)
+    }
+
+    func testCharactersDroppedFromAnEmptyFieldFailByName() async throws {
+        let screen = Screen([emptyField(), after("c")])
+        let message = try await failure { try await self.type("cnified-carer@demo.artha.care", on: screen) }
+        XCTAssertTrue(message.contains("CHARACTERS DROPPED"), message)
+        XCTAssertTrue(message.contains("typed 29") && message.contains("holds 1"), message)
+        XCTAssertEqual(screen.events.filter { $0.hasPrefix("send") }.count, 1)
+    }
+
+    func testAllCharactersInAnEmptyFieldPass() async throws {
+        try await type("abc", on: Screen([emptyField(), after("abc")]))
+    }
+
+    func testAFormattingFieldThatAddsCharactersPasses() async throws {
+        try await type("07700900123", on: Screen([emptyField(), after("07700 900 123")]))
+    }
+
+    func testASecureFieldIsNotCounted() async throws {
+        try await type("hunter22", on: Screen([emptyField(secure: true), after("•", secure: true)]))
+    }
+
+    func testAFieldThatWasNotEmptyIsNotCounted() async throws {
+        let notEmpty = TextInputState(keyboardAttached: true, focused: FocusedField(value: "abc", empty: false))
+        try await type("def", on: Screen([notEmpty, after("x")]))
+    }
+
+    func testAnUnreadableValueIsNotCounted() async throws {
+        try await type("abc", on: Screen([emptyField(), TextInputState(keyboardAttached: true, focused: FocusedField(value: nil))]))
     }
 
     func testEmptyTextDoesNothing() async throws {
         let screen = Screen([])
         try await type("", on: screen)
         XCTAssertEqual(screen.events, [])
+    }
+
+    private func emptyField(secure: Bool = false) -> TextInputState {
+        TextInputState(keyboardAttached: true, focused: FocusedField(value: "Email", empty: true, secure: secure))
+    }
+
+    private func after(_ value: String, secure: Bool = false) -> TextInputState {
+        TextInputState(keyboardAttached: true, focused: FocusedField(value: value, secure: secure))
     }
 
     private func type(_ text: String, on screen: Screen, timeout: TimeInterval = TextInputSequence.readyTimeout) async throws {
