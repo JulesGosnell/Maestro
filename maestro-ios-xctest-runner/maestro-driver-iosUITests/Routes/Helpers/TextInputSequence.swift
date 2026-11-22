@@ -43,25 +43,44 @@ struct FocusedField {
 ///      may add characters. Never retried — a retry would type into a field of unknown content.
 @MainActor
 struct TextInputSequence {
-    static let readyTimeout: TimeInterval = 3
-    static let typingSpeed = 30
-    private static let pollInterval: TimeInterval = 0.1
+    /// Generous on purpose (artha, under Rojina's rule that a too-short timeout IS the bug): on
+    /// run 45038422797 the VM stalled for 9 s straight, and a 3 s wait would have turned that
+    /// into a NO KEYBOARD red. Bounded only by this.
+    nonisolated static let defaultReadyTimeout: TimeInterval = 60
+    /// Overrides `defaultReadyTimeout`, in seconds. It is read from the RUNNER's environment, so
+    /// set it in Maestro's environment with the prefix of the launch path that starts the runner:
+    /// `TEST_RUNNER_` (xcodebuild test-without-building) or `SIMCTL_CHILD_` (simctl launch) —
+    /// the same way PORT and snapshotKeyHonorModalViews reach it.
+    nonisolated static let readyTimeoutVariable = "MAESTRO_INPUT_TEXT_READY_TIMEOUT"
+    nonisolated static let typingSpeed = 30
+    /// Gentle: while the app is stalled every read is work on its main thread, so the wait
+    /// sleeps between reads rather than hammering it.
+    nonisolated static let pollInterval: TimeInterval = 0.5
+
+    /// The ready timeout an environment asks for; the default when unset or not a positive number.
+    nonisolated static func readyTimeout(environment: [String: String]) -> TimeInterval {
+        guard let raw = environment[readyTimeoutVariable], let seconds = TimeInterval(raw), seconds > 0 else {
+            return defaultReadyTimeout
+        }
+        return seconds
+    }
 
     /// `state` reads the screen (only before and after typing, never during); `send` types text
-    /// at a typing speed; `sleep` waits between pre-typing reads.
+    /// at a typing speed; `sleep` waits between pre-typing reads; `now` is the clock.
     static func type(
         _ text: String,
-        timeout: TimeInterval = readyTimeout,
+        timeout: TimeInterval = readyTimeout(environment: ProcessInfo.processInfo.environment),
         state: () throws -> TextInputState,
         send: (String, Int) async throws -> Void,
-        sleep: (TimeInterval) async throws -> Void = { try await Task.sleep(nanoseconds: UInt64($0 * 1_000_000_000)) }
+        sleep: (TimeInterval) async throws -> Void = { try await Task.sleep(nanoseconds: UInt64($0 * 1_000_000_000)) },
+        now: () -> Date = Date.init
     ) async throws {
         guard !text.isEmpty else { return }
 
-        let deadline = Date().addingTimeInterval(timeout)
+        let deadline = now().addingTimeInterval(timeout)
         var before = try state()
         while !before.ready {
-            guard Date() < deadline else {
+            guard now() < deadline else {
                 throw AppError(message: notReadyMessage(before, timeout: timeout, count: text.count))
             }
             try await sleep(pollInterval)

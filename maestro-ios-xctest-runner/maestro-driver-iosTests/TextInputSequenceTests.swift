@@ -27,16 +27,44 @@ final class TextInputSequenceTests: XCTestCase {
         XCTAssertEqual(screen.events, ["read", "sleep", "read", "sleep", "read", "send abc @\(TextInputSequence.typingSpeed)", "read"])
     }
 
+    func testANineSecondStallBeforeFocusStillTypes() async throws {
+        // run 45038422797: the VM stalled 9 s straight. Each read during the stall takes 1.5 s.
+        let stalled = TextInputState(keyboardAttached: false, focused: nil)
+        let screen = Screen(Array(repeating: stalled, count: 5) + [ready, ready], readCost: 1.5)
+        try await type("unified-carer-password-1234", on: screen)
+        XCTAssertGreaterThanOrEqual(screen.clock, 9)
+        XCTAssertEqual(screen.events.filter { $0.hasPrefix("send") }, ["send unified-carer-password-1234 @\(TextInputSequence.typingSpeed)"])
+    }
+
+    func testTheWaitIsBoundedBy60SecondsAndPollsGently() async throws {
+        let screen = Screen([TextInputState(keyboardAttached: false, focused: nil)])
+        let message = try await failure { try await self.type("abc", on: screen) }
+        XCTAssertTrue(message.contains("after 60.0s"), message)
+        XCTAssertGreaterThanOrEqual(screen.clock, 60)
+        XCTAssertLessThan(screen.clock, 61)
+        // a sleep of pollInterval between every two reads, never two reads back to back
+        let reads = screen.events.filter { $0 == "read" }.count
+        XCTAssertEqual(screen.events.filter { $0 == "sleep" }.count, reads - 1)
+        XCTAssertLessThanOrEqual(reads, Int(60 / TextInputSequence.pollInterval) + 1)
+    }
+
+    func testTheReadyTimeoutIsOverriddenByTheRunnerEnvironment() async {
+        XCTAssertEqual(TextInputSequence.readyTimeout(environment: [:]), 60)
+        XCTAssertEqual(TextInputSequence.readyTimeout(environment: ["MAESTRO_INPUT_TEXT_READY_TIMEOUT": "120"]), 120)
+        XCTAssertEqual(TextInputSequence.readyTimeout(environment: ["MAESTRO_INPUT_TEXT_READY_TIMEOUT": "nope"]), 60)
+        XCTAssertEqual(TextInputSequence.readyTimeout(environment: ["MAESTRO_INPUT_TEXT_READY_TIMEOUT": "0"]), 60)
+    }
+
     func testNoKeyboardFailsByNameAndTypesNothing() async throws {
         let screen = Screen([TextInputState(keyboardAttached: false, focused: FocusedField(value: ""))])
-        let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
+        let message = try await failure { try await self.type("abc", on: screen) }
         XCTAssertTrue(message.contains("NO KEYBOARD"), message)
         XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
     }
 
     func testNoFocusedFieldFailsByNameAndTypesNothing() async throws {
         let screen = Screen([TextInputState(keyboardAttached: true, focused: nil)])
-        let message = try await failure { try await self.type("abc", on: screen, timeout: 0.05) }
+        let message = try await failure { try await self.type("abc", on: screen) }
         XCTAssertTrue(message.contains("NO FOCUSED FIELD"), message)
         XCTAssertFalse(screen.events.contains { $0.hasPrefix("send") })
     }
@@ -97,13 +125,14 @@ final class TextInputSequenceTests: XCTestCase {
         TextInputState(keyboardAttached: true, focused: FocusedField(value: value, secure: secure))
     }
 
-    private func type(_ text: String, on screen: Screen, timeout: TimeInterval = TextInputSequence.readyTimeout) async throws {
+    private func type(_ text: String, on screen: Screen, timeout: TimeInterval = TextInputSequence.defaultReadyTimeout) async throws {
         try await TextInputSequence.type(
             text,
             timeout: timeout,
             state: { screen.read() },
             send: { keys, speed in screen.events.append("send \(keys) @\(speed)") },
-            sleep: { _ in screen.events.append("sleep"); try await Task.sleep(nanoseconds: 10_000_000) })
+            sleep: { seconds in screen.events.append("sleep"); screen.clock += seconds },
+            now: { Date(timeIntervalSinceReferenceDate: screen.clock) })
     }
 
     private func failure(_ body: () async throws -> Void) async throws -> String {
@@ -117,16 +146,23 @@ final class TextInputSequenceTests: XCTestCase {
     }
 }
 
-/// A scripted screen: each read returns the next state; the last one repeats.
+/// A scripted screen on a simulated clock: each read returns the next state (the last one
+/// repeats) and takes `readCost` seconds — a stalled app answers slowly; sleeps advance it too.
 @MainActor
 private final class Screen {
     private var states: [TextInputState]
+    private let readCost: TimeInterval
     var events: [String] = []
+    var clock: TimeInterval = 0
 
-    init(_ states: [TextInputState]) { self.states = states }
+    init(_ states: [TextInputState], readCost: TimeInterval = 0) {
+        self.states = states
+        self.readCost = readCost
+    }
 
     func read() -> TextInputState {
         events.append("read")
+        clock += readCost
         return states.count > 1 ? states.removeFirst() : states[0]
     }
 }
