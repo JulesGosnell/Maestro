@@ -27,7 +27,7 @@ import kotlin.math.abs
 object TapStableBounds {
 
     const val TIMEOUT_ENV = "MAESTRO_TAP_STABLE_TIMEOUT"
-    const val DEFAULT_TIMEOUT_SECONDS = 5.0
+    const val DEFAULT_TIMEOUT_SECONDS = 60.0
     const val TOLERANCE = 2
 
     private val LOGGER = LoggerFactory.getLogger(TapStableBounds::class.java)

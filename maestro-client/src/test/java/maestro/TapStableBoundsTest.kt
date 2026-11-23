@@ -123,11 +123,11 @@ class TapStableBoundsTest {
         TapStableBounds.env = { "12" }
         assertThat(TapStableBounds.timeoutMs()).isEqualTo(12_000)
         TapStableBounds.env = { "nope" }
-        assertThat(TapStableBounds.timeoutMs()).isEqualTo(5_000)
+        assertThat(TapStableBounds.timeoutMs()).isEqualTo(60_000)
         TapStableBounds.env = { "0" }
-        assertThat(TapStableBounds.timeoutMs()).isEqualTo(5_000)
+        assertThat(TapStableBounds.timeoutMs()).isEqualTo(60_000)
         TapStableBounds.env = { null }
-        assertThat(TapStableBounds.timeoutMs()).isEqualTo(5_000)
+        assertThat(TapStableBounds.timeoutMs()).isEqualTo(60_000)
     }
 
     @Test
