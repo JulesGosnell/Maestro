@@ -17,8 +17,9 @@ import kotlin.math.abs
  * So: re-read the element's bounds from fresh hierarchies until two consecutive reads agree
  * (every edge within [TOLERANCE] pt), bounded by [timeoutMs]; the tap goes to the centre of the
  * LATEST read. A condition wait, never a fixed sleep: each read is a device round trip.
- * A wait that times out FAILS the tap ([MaestroException.ElementStillMoving]) — it never taps
- * a point it could not confirm.
+ * A wait that times out FAILS the tap ([MaestroException.ElementStillMoving]), and so does an
+ * element that stops resolving to exactly one node ([MaestroException.ElementLostWhileStabilising]):
+ * it never taps a point it could not confirm.
  *
  * Timeout: env [TIMEOUT_ENV] in seconds (default [DEFAULT_TIMEOUT_SECONDS]); a value that is
  * not a positive number keeps the default.
@@ -46,6 +47,13 @@ object TapStableBounds {
             abs(a.width - b.width) <= TOLERANCE &&
             abs(a.height - b.height) <= TOLERANCE
 
+    private fun lost(node: TreeNode, reads: Int, elapsedMs: Long, latest: Bounds, why: String): Nothing {
+        val message = "TAP-STABLE-LOST element ${describe(node)} $why after ${elapsedMs}ms " +
+            "(reads=$reads); last bounds read: $latest; nothing tapped"
+        LOGGER.warn(message)
+        throw MaestroException.ElementLostWhileStabilising(message)
+    }
+
     private fun describe(node: TreeNode): String {
         val id = node.attributes["resource-id"].orEmpty()
         val text = node.attributes["accessibilityText"].orEmpty().ifEmpty { node.attributes["text"].orEmpty() }
@@ -58,35 +66,36 @@ object TapStableBounds {
     /**
      * Polls [readHierarchy] until [node]'s bounds agree on two consecutive reads and returns them.
      * Throws [MaestroException.ElementStillMoving] when they do not within [timeoutMs].
-     * Returns [fallback] when the element stops resolving to exactly one node (unchanged
-     * pre-existing behaviour: the tap goes where the element was last known).
+     * Throws [MaestroException.ElementLostWhileStabilising] when a read finds no node, or 2+ nodes,
+     * matching [node] — waiting cannot fix that, and tapping the last known bounds would be a guess.
+     * [lastKnown] (the lookup's bounds) is only reported in that error.
      */
-    fun await(node: TreeNode, fallback: Bounds, readHierarchy: () -> ViewHierarchy): Bounds {
+    fun await(node: TreeNode, lastKnown: Bounds, readHierarchy: () -> ViewHierarchy): Bounds {
         val timeoutMs = timeoutMs()
         val startMs = System.currentTimeMillis()
         var beforeLast: Bounds? = null
         var previous: Bounds? = null
-        var latest = fallback
+        var latest = lastKnown
         var reads = 0
         var misses = 0
         while (true) {
-            var missed = false
             val current = try {
-                readHierarchy().refreshElement(node)?.toUiElementOrNull()?.bounds
+                val matches = readHierarchy().aggregate().filter {
+                    (it.attributes - "bounds") == (node.attributes - "bounds")
+                }
+                if (matches.size != 1) {
+                    lost(node, reads + 1, System.currentTimeMillis() - startMs, latest,
+                        if (matches.isEmpty()) "vanished" else "${matches.size} matches")
+                }
+                matches.single().toUiElementOrNull()?.bounds
+                    ?: lost(node, reads + 1, System.currentTimeMillis() - startMs, latest, "no bounds")
             } catch (e: XCUITestServerError.TransientIssue) {
                 // A transient XCTest miss is "ask again", within the same timeout.
-                missed = true
                 misses++
                 null
             }
             reads++
             val elapsedMs = System.currentTimeMillis() - startMs
-            if (current == null && !missed) {
-                // The element no longer resolves to exactly one node (it changed, vanished or
-                // has a twin). Waiting cannot fix that; tap what we last knew, as before.
-                LOGGER.warn("TAP-STABLE-LOST reads=$reads elapsedMs=$elapsedMs tapping=$latest")
-                return latest
-            }
             if (current != null) {
                 if (previous != null && agree(previous, current)) {
                     LOGGER.info("TAP-STABLE reads=$reads elapsedMs=$elapsedMs bounds=$current")

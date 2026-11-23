@@ -79,14 +79,32 @@ class TapStableBoundsTest {
     }
 
     @Test
-    fun `an element that stops resolving is tapped where it was last read`() {
+    fun `an element that VANISHES while settling FAILS the tap by name, and nothing is tapped`() {
         val driver = driver(Platform.IOS)
         every { driver.contentDescriptor(any()) } returnsMany
             listOf(screen(moving[0]), TreeNode(children = listOf()))
 
-        tapHint(driver)
+        val error = assertThrows<MaestroException.ElementLostWhileStabilising> { tapHint(driver) }
 
-        verify(exactly = 1) { driver.tap(Point(195, 283)) }
+        assertThat(error.message).contains("TAP-STABLE-LOST")
+        assertThat(error.message).contains("id=\"skip-reason-hint\"")
+        assertThat(error.message).contains("vanished")
+        assertThat(error.message).contains("Bounds(x=48, y=266")
+        verify(exactly = 0) { driver.tap(any()) }
+    }
+
+    @Test
+    fun `an element that gains a TWIN while settling FAILS the tap by name, and nothing is tapped`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returnsMany listOf(
+            screen(moving[0]),
+            TreeNode(children = listOf(hint(settled), hint("[48,500][342,534]"))),
+        )
+
+        val error = assertThrows<MaestroException.ElementLostWhileStabilising> { tapHint(driver) }
+
+        assertThat(error.message).contains("2 matches")
+        verify(exactly = 0) { driver.tap(any()) }
     }
 
     @Test
