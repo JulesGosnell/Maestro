@@ -22,6 +22,7 @@ package maestro
 import com.github.romankh3.image.comparison.ImageComparison
 import maestro.UiElement.Companion.toUiElementOrNull
 import maestro.device.DeviceOrientation
+import maestro.device.Platform
 import maestro.drivers.CdpWebDriver
 import maestro.nearside.NearSideSelector
 import maestro.utils.MaestroTimer
@@ -191,14 +192,22 @@ class Maestro(
 
         val hierarchyBeforeTap = waitForAppToSettle(initialHierarchy, appId, waitToSettleTimeoutMs) ?: initialHierarchy
 
-        val center = (
+        val refreshedBounds = (
                 hierarchyBeforeTap
                     .refreshElement(element.treeNode)
                     ?.also { LOGGER.info("Refreshed element") }
                     ?.toUiElementOrNull()
                     ?: element
                 ).bounds
-            .center()
+        // smithr: on iOS the "refresh" above is usually against the lookup's own, pre-settle
+        // read; aim at bounds two fresh reads agree on (TapStableBounds).
+        val center = (
+            if (cachedDeviceInfo.platform == Platform.IOS) {
+                TapStableBounds.await(element.treeNode, refreshedBounds) { viewHierarchy() }
+            } else {
+                refreshedBounds
+            }
+            ).center()
         performTap(
             x = center.x,
             y = center.y,
