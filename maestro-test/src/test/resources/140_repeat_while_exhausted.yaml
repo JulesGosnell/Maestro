@@ -1,0 +1,8 @@
+appId: com.other.app
+---
+- repeat:
+    times: 2
+    while:
+      notVisible: "Value 5"
+    commands:
+      - tapOn: Button

@@ -843,7 +843,11 @@ class Orchestra(
                 ?.let { evaluateCondition(it, commandOptional = command.optional, timeoutMs = REPEAT_WHILE_LOOKUP_TIMEOUT_MS) } != false
         }
 
-        while (checkCondition() && counter < maxRuns && currentCoroutineContext().isActive) {
+        // artha (smithr#1446): remember the last condition result. The loop checks the condition
+        // BEFORE the turn count, so when it stops on `counter == maxRuns` with this still true, the
+        // `while` never cleared: the loop ran out of turns. No extra lookup is spent to know that.
+        var conditionHeld = true
+        while (checkCondition().also { conditionHeld = it } && counter < maxRuns && currentCoroutineContext().isActive) {
             if (counter > 0) {
                 command.commands.forEach { resetCommand(it) }
             }
@@ -860,6 +864,14 @@ class Orchestra(
 
         if (counter == 0) {
             throw CommandSkipped
+        }
+
+        // artha (smithr#1446): `Repeat while … COMPLETED` used to cover two different endings, and a
+        // loop that ran out of turns was read as "the element became visible" (artha#5189). Say which.
+        if (command.condition != null && conditionHeld && counter >= maxRuns) {
+            logger.warn("${command.description()} EXHAUSTED after $counter runs: its while-condition never cleared")
+            metadata = metadata.copy(exhausted = true)
+            updateMetadata(maestroCommand, metadata)
         }
 
         return mutating
@@ -1693,8 +1705,15 @@ class Orchestra(
         val logMessages: List<String> = emptyList(),
         val insight: Insight = Insight("", Insight.Level.NONE),
         val aiReasoning: String? = null,
-        val labeledCommand: String? = null
-    )
+        val labeledCommand: String? = null,
+        // artha (smithr#1446): a `repeat` with a `while` stopped because `times` ran out, not because
+        // its condition cleared.
+        val exhausted: Boolean = false,
+    ) {
+        /** The word the runners log when a command finishes: COMPLETED, or EXHAUSTED for a spent loop. */
+        fun completionLabel(): String =
+            if (exhausted) "EXHAUSTED after $numberOfRuns runs" else "COMPLETED"
+    }
 
     enum class ErrorResolution {
         CONTINUE,

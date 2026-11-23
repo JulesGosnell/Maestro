@@ -119,7 +119,7 @@ object MaestroCommandRunner {
                 refreshUi()
             },
             onCommandComplete = { _, command ->
-                logger.info("${command.description()} COMPLETED")
+                logger.info("${command.description()} ${commandMetadata[command]?.completionLabel() ?: "COMPLETED"}")
                 commandStatuses[command] = CommandStatus.COMPLETED
                 if (analyze) {
                     ScreenshotUtils.takeDebugScreenshotByCommand(maestro, debugOutput, CommandStatus.COMPLETED)
