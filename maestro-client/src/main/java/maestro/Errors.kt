@@ -65,6 +65,12 @@ sealed class MaestroException(override val message: String, cause: Throwable? = 
     class MissingAppleTeamId(message: String, cause: Throwable? = null): MaestroException(message, cause)
 
     class IOSDeviceDriverSetupException(message: String, cause: Throwable? = null): MaestroException(message, cause)
+
+    /** smithr: an iOS element tap whose target's bounds never stopped moving (TapStableBounds). */
+    class ElementStillMoving(message: String) : MaestroException(message)
+
+    /** smithr: an iOS element tap whose target stopped resolving to exactly one node while its bounds were awaited. */
+    class ElementLostWhileStabilising(message: String) : MaestroException(message)
 }
 
 sealed class MaestroDriverStartupException(override val message: String, cause: Throwable? = null): RuntimeException(message, cause) {
