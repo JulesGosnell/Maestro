@@ -182,9 +182,12 @@ class TestSuiteInteractor(
         val flowTimeMillis = measureTimeMillis {
             try {
                 var commandSequenceNumber = 0
+                // artha (smithr#1446): kept so a spent repeat logs EXHAUSTED, not COMPLETED.
+                val commandMetadata = java.util.IdentityHashMap<maestro.orchestra.MaestroCommand, Orchestra.CommandMetadata>()
                 val orchestra = Orchestra(
                     maestro = maestro,
                     screenshotsDir = testOutputDir?.resolve("screenshots"),
+                    onCommandMetadataUpdate = { command, metadata -> commandMetadata[command] = metadata },
                     onCommandStart = { _, command ->
                         logger.info("${shardPrefix}${command.description()} RUNNING")
                         debugOutput.commands[command] = CommandDebugMetadata(
@@ -194,7 +197,7 @@ class TestSuiteInteractor(
                         )
                     },
                     onCommandComplete = { _, command ->
-                        logger.info("${shardPrefix}${command.description()} COMPLETED")
+                        logger.info("${shardPrefix}${command.description()} ${commandMetadata[command]?.completionLabel() ?: "COMPLETED"}")
                         debugOutput.commands[command]?.let {
                             it.status = CommandStatus.COMPLETED
                             it.calculateDuration()

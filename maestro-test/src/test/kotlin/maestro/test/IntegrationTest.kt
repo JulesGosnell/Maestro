@@ -2248,6 +2248,55 @@ class IntegrationTest {
         assertThat(elapsedMs).isLessThan(4000L)
     }
 
+    private fun repeatMetadataFor(flow: String): List<Orchestra.CommandMetadata> {
+        val commands = readCommands(flow)
+        val driver = driver {
+            var counter = 0
+
+            val counterView = element {
+                text = "Value 0"
+                bounds = Bounds(0, 100, 100, 100)
+            }
+
+            element {
+                text = "Button"
+                bounds = Bounds(0, 0, 100, 100)
+                onClick = {
+                    counter++
+                    counterView.text = "Value $counter"
+                }
+            }
+        }
+        val updates = mutableListOf<Pair<MaestroCommand, Orchestra.CommandMetadata>>()
+        Maestro(driver).use {
+            runBlocking {
+                orchestra(it, onCommandMetadataUpdate = { c, m -> updates += c to m }).runFlow(commands)
+            }
+        }
+        return updates.filter { it.first.repeatCommand != null }.map { it.second }
+    }
+
+    @Test
+    fun `Case 140 - Repeat while that runs out of turns says EXHAUSTED, not COMPLETED`() {
+        // smithr#1446 / artha#5189: "Value 5" never appears in 2 taps, so the loop ran out of turns.
+        val last = repeatMetadataFor("140_repeat_while_exhausted").last()
+
+        assertThat(last.numberOfRuns).isEqualTo(2)
+        assertThat(last.exhausted).isTrue()
+        assertThat(last.completionLabel()).isEqualTo("EXHAUSTED after 2 runs")
+    }
+
+    @Test
+    fun `Case 141 - Repeat while whose condition clears on the last turn is COMPLETED`() {
+        // 3 taps make "Value 3" visible on the 3rd turn: counter == times, but the condition cleared.
+        // This is what an implementation that only compares the counter to `times` gets wrong.
+        val last = repeatMetadataFor("141_repeat_while_cleared_on_last_turn").last()
+
+        assertThat(last.numberOfRuns).isEqualTo(3)
+        assertThat(last.exhausted).isFalse()
+        assertThat(last.completionLabel()).isEqualTo("COMPLETED")
+    }
+
     @Test
     fun `Case 076 - Optional assertion`() {
         // Given
