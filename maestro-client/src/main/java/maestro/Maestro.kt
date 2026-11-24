@@ -186,7 +186,10 @@ class Maestro(
         longPress: Boolean = false,
         appId: String? = null,
         tapRepeat: TapRepeat? = null,
-        waitToSettleTimeoutMs: Int? = null
+        waitToSettleTimeoutMs: Int? = null,
+        // smithr: the selector that chose [element]; TapStableBounds re-evaluates it to keep
+        // tracking the same node (null: track by the node's own attributes)
+        candidates: ElementFilter? = null,
     ) {
         LOGGER.info("Tapping on element: ${tapRepeat ?: ""} $element")
 
@@ -203,7 +206,7 @@ class Maestro(
         // read; aim at bounds two fresh reads agree on (TapStableBounds).
         val center = (
             if (cachedDeviceInfo.platform == Platform.IOS) {
-                TapStableBounds.await(element.treeNode, refreshedBounds) { viewHierarchy() }
+                TapStableBounds.await(element.treeNode, refreshedBounds, candidates) { viewHierarchy() }
             } else {
                 refreshedBounds
             }
@@ -234,7 +237,8 @@ class Maestro(
                     retryIfNoChange = false,
                     waitUntilVisible = false,
                     longPress = longPress,
-                    tapRepeat = tapRepeat
+                    tapRepeat = tapRepeat,
+                    candidates = candidates,
                 )
             }
         }

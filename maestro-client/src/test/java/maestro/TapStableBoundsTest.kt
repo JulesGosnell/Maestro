@@ -94,17 +94,129 @@ class TapStableBoundsTest {
     }
 
     @Test
-    fun `an element that gains a TWIN while settling FAILS the tap by name, and nothing is tapped`() {
+    fun `an element that gains a TWIN while settling is tracked by its bounds, never failed`() {
         val driver = driver(Platform.IOS)
         every { driver.contentDescriptor(any()) } returnsMany listOf(
             screen(moving[0]),
-            TreeNode(children = listOf(hint(settled), hint("[48,500][342,534]"))),
+            TreeNode(children = listOf(hint("[48,500][342,534]"), hint(settled))),
+            TreeNode(children = listOf(hint("[48,500][342,534]"), hint(settled))),
         )
 
-        val error = assertThrows<MaestroException.ElementLostWhileStabilising> { tapHint(driver) }
+        tapHint(driver)
 
-        assertThat(error.message).contains("2 matches")
+        verify(exactly = 1) { driver.tap(Point(195, 262)) }
+        verify(exactly = 0) { driver.tap(Point(195, 517)) }
+    }
+
+    // ---- identity (artha 2026-11-24): keep tracking the node the selector chose ----
+
+    // A native iOS alert, as in artha's family/profile run: the title, the "Sign Out" button and
+    // a third node all carry {accessibilityText="Sign Out", resource-id=""}. The selector chose
+    // the button (lookup bounds x=199 y=440 140x48). [dy] slides the whole alert.
+    private fun signOutNode(bounds: String, clickable: Boolean = false) = TreeNode(
+        attributes = mutableMapOf(
+            "resource-id" to "", "text" to "Sign Out", "accessibilityText" to "Sign Out", "bounds" to bounds,
+        ),
+        clickable = clickable,
+    )
+
+    private fun alert(dy: Int, withSignOut: Boolean = true) = TreeNode(
+        children = listOfNotNull(
+            signOutNode("[51,${360 + dy}][339,${490 + dy}]").takeIf { withSignOut },    // the alert itself
+            signOutNode("[60,${380 + dy}][330,${402 + dy}]").takeIf { withSignOut },    // its title
+            TreeNode(attributes = mutableMapOf(
+                "resource-id" to "", "text" to "Cancel", "accessibilityText" to "Cancel",
+                "bounds" to "[51,${440 + dy}][191,${488 + dy}]",
+            )),
+            signOutNode("[199,${440 + dy}][339,${488 + dy}]", clickable = true).takeIf { withSignOut },
+        )
+    )
+
+    private val signOutSelector: ElementFilter = Filters.textMatches(Regex("Sign Out"))
+
+    private fun tapSignOut(driver: Driver, selector: ElementFilter? = signOutSelector) {
+        val button = signOutNode("[199,440][339,488]", clickable = true)
+        val element = UiElement(button, Bounds(199, 440, 140, 48))
+        Maestro(StaticScreen(driver)).tap(
+            element = element, initialHierarchy = ViewHierarchy(alert(0)), candidates = selector,
+        )
+    }
+
+    @Test
+    fun `three nodes sharing every attribute - the SELECTED alert button is tapped`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returns alert(0)
+
+        tapSignOut(driver)
+
+        verify(exactly = 1) { driver.tap(Point(269, 464)) }   // the button's centre, not the title's
+        verify(exactly = 1) { driver.tap(any()) }
+    }
+
+    @Test
+    fun `three nodes sharing every attribute, with no selector - still the button, by bounds`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returns alert(0)
+
+        tapSignOut(driver, selector = null)
+
+        verify(exactly = 1) { driver.tap(Point(269, 464)) }
+    }
+
+    @Test
+    fun `a sliding alert whose button has identical siblings still waits for stable bounds`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returnsMany
+            listOf(alert(-8), alert(-19), alert(-26), alert(-29), alert(-29))
+
+        tapSignOut(driver)
+
+        verify(exactly = 1) { driver.tap(Point(269, 435)) }   // settled: y 411-459
+        verify(exactly = 0) { driver.tap(Point(269, 464)) }   // where the lookup read it
+        verify(exactly = 5) { driver.contentDescriptor(any()) }
+    }
+
+    @Test
+    fun `an alert that truly goes away FAILS the tap by name - the selector matches nothing`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returnsMany
+            listOf(alert(-8), alert(-8, withSignOut = false))
+
+        val error = assertThrows<MaestroException.ElementLostWhileStabilising> { tapSignOut(driver) }
+
+        assertThat(error.message).contains("TAP-STABLE-LOST")
+        assertThat(error.message).contains("text=\"Sign Out\"")
+        assertThat(error.message).contains("vanished")
+        assertThat(error.message).contains("(reads=2)")
+        assertThat(error.message).contains("Bounds(x=199, y=432")   // the button's last read, read 1
         verify(exactly = 0) { driver.tap(any()) }
+    }
+
+    // As artha's family/access-withdrawn run: the card's accessibility text re-rendered between
+    // the lookup and the first re-read; same resource-id, same place.
+    private val cardId = "family-client-card-c7c28359-556e-4f30-8879-b8808acad1ba"
+
+    private fun card(text: String, bounds: String = "[16,268][374,348]") = TreeNode(
+        attributes = mutableMapOf("resource-id" to cardId, "text" to "", "accessibilityText" to text, "bounds" to bounds),
+        clickable = true,
+    )
+
+    @Test
+    fun `a card whose text re-renders between reads is the same card, and is tapped`() {
+        val driver = driver(Platform.IOS)
+        every { driver.contentDescriptor(any()) } returns TreeNode(
+            children = listOf(card("Zoe Schedule-Only ub8db0500, Daughter, Schedule, Access withdrawn")),
+        )
+        val before = card("Zoe Schedule-Only ub8db0500, Daughter, Schedule")
+        val element = UiElement(before, Bounds(16, 268, 358, 80))
+
+        Maestro(StaticScreen(driver)).tap(
+            element = element,
+            initialHierarchy = ViewHierarchy(TreeNode(children = listOf(before))),
+            candidates = Filters.idMatches(Regex(cardId)),
+        )
+
+        verify(exactly = 1) { driver.tap(Point(195, 308)) }
     }
 
     @Test

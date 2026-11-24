@@ -18,8 +18,13 @@ import kotlin.math.abs
  * (every edge within [TOLERANCE] pt), bounded by [timeoutMs]; the tap goes to the centre of the
  * LATEST read. A condition wait, never a fixed sleep: each read is a device round trip.
  * A wait that times out FAILS the tap ([MaestroException.ElementStillMoving]), and so does an
- * element that stops resolving to exactly one node ([MaestroException.ElementLostWhileStabilising]):
+ * element the selector no longer matches at all ([MaestroException.ElementLostWhileStabilising]):
  * it never taps a point it could not confirm.
+ *
+ * IDENTITY (artha 2026-11-24): each read tracks the SAME node the selector chose — see [track].
+ * It never compares all attributes: a native iOS alert's title, button and a third node all carry
+ * {accessibilityText="Sign Out", resource-id=""} (3 "matches", nothing tapped), and a card whose
+ * accessibility text re-rendered between two reads matched nothing ("vanished after 276ms").
  *
  * Timeout: env [TIMEOUT_ENV] in seconds (default [DEFAULT_TIMEOUT_SECONDS]); a value that is
  * not a positive number keeps the default.
@@ -64,13 +69,46 @@ object TapStableBounds {
     }
 
     /**
+     * The node in [nodes] that IS the element the selector chose, or null when there is none.
+     *
+     * - The pool: nodes the original selector still matches ([candidates], re-evaluated on this
+     *   read) — or, with no selector, nodes equal to [node] in every attribute but bounds.
+     * - With a resource-id set on [node], only nodes with that id are it; an attribute change
+     *   (re-rendered text) on that node is still the same element.
+     * - Several left (siblings sharing every attribute): the one nearest [last], the bounds it
+     *   was last seen at. Siblings sharing attributes never fail the tap.
+     */
+    fun track(nodes: List<TreeNode>, node: TreeNode, last: Bounds, candidates: ElementFilter?): TreeNode? {
+        val id = node.attributes["resource-id"].orEmpty()
+        val pool = (candidates?.invoke(nodes) ?: nodes.filter {
+            id.isNotEmpty() || (it.attributes - "bounds") == (node.attributes - "bounds")
+        })
+            .filter { id.isEmpty() || it.attributes["resource-id"] == id }
+            .distinct()
+            .mapNotNull { candidate -> candidate.toUiElementOrNull()?.let { candidate to it.bounds } }
+        if (pool.size > 1) {
+            LOGGER.info("TAP-STABLE ${pool.size} nodes match ${describe(node)}; tracking the one nearest $last")
+        }
+        return pool.minByOrNull { (_, bounds) -> distance(bounds, last) }?.first
+    }
+
+    private fun distance(a: Bounds, b: Bounds): Int =
+        abs(a.x - b.x) + abs(a.y - b.y) + abs(a.width - b.width) + abs(a.height - b.height)
+
+    /**
      * Polls [readHierarchy] until [node]'s bounds agree on two consecutive reads and returns them.
      * Throws [MaestroException.ElementStillMoving] when they do not within [timeoutMs].
-     * Throws [MaestroException.ElementLostWhileStabilising] when a read finds no node, or 2+ nodes,
-     * matching [node] — waiting cannot fix that, and tapping the last known bounds would be a guess.
-     * [lastKnown] (the lookup's bounds) is only reported in that error.
+     * Throws [MaestroException.ElementLostWhileStabilising] when a read finds no node that [track]
+     * accepts as [node] — waiting cannot fix that, and tapping the last known bounds would be a guess.
+     * [lastKnown] is the lookup's bounds: where tracking starts, and what that error reports.
+     * [candidates] is the tap's selector (null: match on [node]'s own attributes, see [track]).
      */
-    fun await(node: TreeNode, lastKnown: Bounds, readHierarchy: () -> ViewHierarchy): Bounds {
+    fun await(
+        node: TreeNode,
+        lastKnown: Bounds,
+        candidates: ElementFilter? = null,
+        readHierarchy: () -> ViewHierarchy,
+    ): Bounds {
         val timeoutMs = timeoutMs()
         val startMs = System.currentTimeMillis()
         var beforeLast: Bounds? = null
@@ -80,15 +118,8 @@ object TapStableBounds {
         var misses = 0
         while (true) {
             val current = try {
-                val matches = readHierarchy().aggregate().filter {
-                    (it.attributes - "bounds") == (node.attributes - "bounds")
-                }
-                if (matches.size != 1) {
-                    lost(node, reads + 1, System.currentTimeMillis() - startMs, latest,
-                        if (matches.isEmpty()) "vanished" else "${matches.size} matches")
-                }
-                matches.single().toUiElementOrNull()?.bounds
-                    ?: lost(node, reads + 1, System.currentTimeMillis() - startMs, latest, "no bounds")
+                track(readHierarchy().aggregate(), node, latest, candidates)?.toUiElementOrNull()?.bounds
+                    ?: lost(node, reads + 1, System.currentTimeMillis() - startMs, latest, "vanished")
             } catch (e: XCUITestServerError.TransientIssue) {
                 // A transient XCTest miss is "ask again", within the same timeout.
                 misses++
