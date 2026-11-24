@@ -579,18 +579,18 @@ class IOSDriver(
         }
     }
 
-    // One round trip: the runner polls for up to waitMs and answers with the matches, which carry
-    // the attributes mapViewHierarchy would have built for them from the full dump.
+    // The runner polls and answers with the matches, which carry the attributes mapViewHierarchy
+    // would have built for them from the full dump. smithr: one round trip per SLICE of waitMs
+    // (NearSideWaitSlices) — the runner's HTTP handler has a 100 s timeout, the caller's wait may not.
     private fun nearSideWaitUntilVisible(query: OnDeviceElementQuery.NearSide): List<TreeNode> {
         return metrics.measured("operation", mapOf("command" to "nearSideWaitUntil")) {
-            val response = runDeviceCall("waitUntil") {
-                iosDevice.nearSideWaitUntil(
-                    NearSideWaitUntilRequest(
-                        find = NearSideFindRequest(selector = query.selector.toRequest(), limit = NEAR_SIDE_MATCH_LIMIT),
-                        condition = "visible",
-                        timeoutMs = query.waitMs,
+            val request = NearSideFindRequest(selector = query.selector.toRequest(), limit = NEAR_SIDE_MATCH_LIMIT)
+            val response = NearSideWaitSlices.await(totalMs = query.waitMs, met = { it.ok }) { sliceMs ->
+                runDeviceCall("waitUntil") {
+                    iosDevice.nearSideWaitUntil(
+                        NearSideWaitUntilRequest(find = request, condition = "visible", timeoutMs = sliceMs)
                     )
-                )
+                }
             }
             LOGGER.info(
                 "Near-side waitUntil: ok=${response.ok} elapsedMs=${response.elapsedMs} " +
