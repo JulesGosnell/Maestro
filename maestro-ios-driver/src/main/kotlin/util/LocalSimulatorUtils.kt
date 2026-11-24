@@ -346,6 +346,7 @@ class LocalSimulatorUtils(private val tempFileHandler: TempFileHandler) {
     ) {
         val outputFile = File(XCRunnerCLIUtils.logDirectory, "xctest_runner_$date.log")
         val params = mutableMapOf("SIMCTL_CHILD_PORT" to port.toString())
+        params += xcuitest.IOSDriverTimeouts.runnerEnvironment("SIMCTL_CHILD_")
         if (snapshotKeyHonorModalViews != null) {
             params["SIMCTL_CHILD_snapshotKeyHonorModalViews"] = snapshotKeyHonorModalViews.toString()
         }

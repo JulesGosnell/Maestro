@@ -30,10 +30,31 @@ enum Route: String, CaseIterable {
     }
 }
 
+/// smithr (artha#5603): the runner's per-request limit, from the env the client launches it with
+/// (IOSDriverTimeouts.kt). A missing or bad value keeps the default; never the old 100 s.
+enum DriverTimeouts {
+    static let variable = "MAESTRO_IOS_DRIVER_TIMEOUT_MS"
+    static let defaultMs = 600_000
+
+    static func handlerMs(environment: [String: String]) -> Int {
+        guard let raw = environment[variable], let ms = Int(raw.trimmingCharacters(in: .whitespaces)), ms > 0 else {
+            return defaultMs
+        }
+        return ms
+    }
+
+    static func handlerSeconds(environment: [String: String]) -> TimeInterval {
+        TimeInterval(handlerMs(environment: environment)) / 1000
+    }
+}
+
 struct XCTestHTTPServer {
     func start() async throws {
         let port = ProcessInfo.processInfo.environment["PORT"]?.toUInt16()
-        let server = HTTPServer(address: try .inet(ip4: "127.0.0.1", port: port ?? 22087), timeout: 100)
+        // smithr (artha#5603): the handler timeout is MAESTRO_IOS_DRIVER_TIMEOUT_MS (default 600 s),
+        // passed by the client at launch; it was a hard-wired 100 s
+        let server = HTTPServer(address: try .inet(ip4: "127.0.0.1", port: port ?? 22087),
+                                timeout: DriverTimeouts.handlerSeconds(environment: ProcessInfo.processInfo.environment))
         
         for route in Route.allCases {
             let handler = await RouteHandlerFactory.createRouteHandler(route: route)

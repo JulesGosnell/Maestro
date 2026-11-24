@@ -46,7 +46,8 @@ struct IsScreenStaticHandler: HTTPHandler {
 // advertises `screenStatic`, and only under -Dmaestro.fastStatic=on.
 enum ScreenStatic {
     static let version = 1
-    static let maxTimeoutMs = 30_000
+    // smithr (artha#5603): the handler's own limit (MAESTRO_IOS_DRIVER_TIMEOUT_MS), not a fixed 30 s
+    static var maxTimeoutMs: Int { DriverTimeouts.handlerMs(environment: ProcessInfo.processInfo.environment) }
 }
 
 /// The screenshot's pixels, as the bytes of its CGImage (format included, so two frames compare
