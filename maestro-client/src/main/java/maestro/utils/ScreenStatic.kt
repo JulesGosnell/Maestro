@@ -1,6 +1,7 @@
 package maestro.utils
 
 import com.github.romankh3.image.comparison.ImageComparison
+import maestro.drivers.NearSideWaitSlices
 import maestro.utils.network.XCUITestServerError
 import java.awt.image.BufferedImage
 
@@ -181,11 +182,17 @@ object ScreenStatic {
      * Upstream: [upstreamAttempt] (GET /isScreenStatic: two screenshots, two PNG encodes and two
      * SHA256s on the runner) repeated until true or [timeoutMs] has elapsed.
      *
-     * fastStatic, when [runnerHasIt]: ONE call to [runner], which loops on the runner comparing
-     * each screenshot's raw pixels with the previous one's until two are equal or [timeoutMs]
-     * has elapsed. The verdict is the same — equal PNGs are equal pixels — at one HTTP round trip,
-     * no PNG encode and, after the first attempt, one screenshot per attempt. If the runner call
-     * fails, the upstream loop runs with the full timeout, as if fastStatic were off.
+     * fastStatic, when [runnerHasIt]: [runner] loops on the runner comparing each screenshot's
+     * raw pixels with the previous one's until two are equal or the timeout it was given has
+     * elapsed. The verdict is the same — equal PNGs are equal pixels — with no PNG encode and,
+     * after the first attempt, one screenshot per attempt. If a runner call fails, the upstream
+     * loop runs with the full timeout, as if fastStatic were off.
+     *
+     * smithr (artha#5603): the runner is asked in SLICES of [timeoutMs] ([NearSideWaitSlices]),
+     * never for all of it in one call — its HTTP handler is cancelled at 100 s (an empty 500), and
+     * the runner itself caps one /screenStatic at 30 s (ScreenDiffHandler.swift maxTimeoutMs) and
+     * answers "not static" there. A slice that ends not static is "not yet": the next slice gets
+     * what is left of [timeoutMs]. Only this check is re-asked; nothing else is sent.
      */
     fun iosSettleStatic(
         timeoutMs: Long,
@@ -197,8 +204,10 @@ object ScreenStatic {
     ): Boolean {
         if (fast && runnerHasIt()) {
             try {
-                val answer = runner(timeoutMs)
-                call?.let { it.path = "runner"; it.attempts += answer.attempts; it.frames += answer.frames }
+                val answer = NearSideWaitSlices.await(totalMs = timeoutMs, met = { it.static }) { sliceMs ->
+                    runner(sliceMs).also { a -> call?.let { it.attempts += a.attempts; it.frames += a.frames } }
+                }
+                call?.let { it.path = "runner" }
                 return answer.static
             } catch (e: Exception) {
                 call?.let { it.path = "runner-failed" }

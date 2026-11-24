@@ -17,6 +17,7 @@ internal class ScreenStaticTest {
         System.clearProperty(ScreenStatic.ANIM_PROPERTY)
         System.clearProperty(ScreenStatic.STATIC_PROPERTY)
         SettleStats.listener = null
+        maestro.drivers.NearSideWaitSlices.clock = System::currentTimeMillis
     }
 
     // ---------------------------------------------------------------- the loop
@@ -231,16 +232,19 @@ internal class ScreenStaticTest {
         var runnerCalls = 0
         var upstreamCalls = 0
         var probes = 0
+        var nowMs = 0L   // the runner's slice runs for the timeout it is given (a virtual clock)
 
-        fun run(fast: Boolean, upstreamResults: List<Boolean> = listOf(true), call: SettleStats.ScreenCall? = null) =
-            ScreenStatic.iosSettleStatic(
+        fun run(fast: Boolean, upstreamResults: List<Boolean> = listOf(true), call: SettleStats.ScreenCall? = null): Boolean {
+            maestro.drivers.NearSideWaitSlices.clock = { nowMs }
+            return ScreenStatic.iosSettleStatic(
                 timeoutMs = 3000,
                 fast = fast,
                 runnerHasIt = { probes++; advertised },
-                runner = { runnerCalls++; answer ?: throw failure() },
+                runner = { t -> runnerCalls++; nowMs += t; answer ?: throw failure() },
                 upstreamAttempt = { upstreamResults.getOrElse(upstreamCalls++) { upstreamResults.last() } },
                 call = call,
             )
+        }
     }
 
     @Test
@@ -261,7 +265,7 @@ internal class ScreenStaticTest {
     }
 
     @Test
-    fun `static on, runner with screenStatic - ONE runner call decides, upstream never runs`() {
+    fun `static on, runner with screenStatic - one slice covering the timeout decides, upstream never runs`() {
         val call = SettleStats.ScreenCall("static")
         val r = Runner(ScreenStatic.RunnerAnswer(false, 7, 8))
         assertThat(r.run(fast = true, call = call)).isFalse()
@@ -292,6 +296,56 @@ internal class ScreenStaticTest {
         assertThat(r.runnerCalls).isEqualTo(1)
         assertThat(r.upstreamCalls).isEqualTo(2)
         assertThat(call.path).isEqualTo("runner-failed")
+    }
+
+    // smithr (artha#5603): the runner on a virtual clock, as on zeug reid — FlyingFox cancels any
+    // handler still running at 100 s with an empty-bodied 500, and the runner caps one
+    // /screenStatic at 30 s (ScreenDiffHandler.swift maxTimeoutMs), answering "not static" there.
+    private class SlicedRunner(val staticAtMs: Long?) {
+        var nowMs = 0L
+        val askedMs = mutableListOf<Long>()
+        var upstreamCalls = 0
+
+        fun answer(t: Long): ScreenStatic.RunnerAnswer {
+            askedMs += t
+            val untilStatic = staticAtMs?.let { (it - nowMs).coerceAtLeast(0) }
+            val runsMs = minOf(if (untilStatic != null && untilStatic <= t) untilStatic else t, 30_000L)
+            if (t > 100_000 && (untilStatic == null || untilStatic > 100_000)) {
+                nowMs += 100_000
+                throw maestro.utils.network.XCUITestServerError.UnknownFailure("Request for screenStatic failed, code: 500, body: ")
+            }
+            nowMs += runsMs
+            return ScreenStatic.RunnerAnswer(untilStatic != null && untilStatic <= runsMs, 1, 1)
+        }
+
+        fun run(timeoutMs: Long): Boolean {
+            maestro.drivers.NearSideWaitSlices.clock = { nowMs }
+            return ScreenStatic.iosSettleStatic(
+                timeoutMs = timeoutMs,
+                fast = true,
+                runnerHasIt = { true },
+                runner = ::answer,
+                upstreamAttempt = { upstreamCalls++; false },
+            )
+        }
+    }
+
+    @Test
+    fun `a 300 s static wait over a 100 s handler limit finds the screen static at 150 s`() {
+        val r = SlicedRunner(staticAtMs = 150_000)
+        assertThat(r.run(300_000)).isTrue()
+        assertThat(r.nowMs).isEqualTo(150_000)
+        assertThat(r.askedMs.max()).isAtMost(maestro.drivers.NearSideWaitSlices.SLICE_MS)
+        assertThat(r.upstreamCalls).isEqualTo(0)
+    }
+
+    @Test
+    fun `a 300 s static wait that never settles ends not-static AT 300 s - not yet, never a 500`() {
+        val r = SlicedRunner(staticAtMs = null)
+        assertThat(r.run(300_000)).isFalse()
+        assertThat(r.nowMs).isEqualTo(300_000)
+        assertThat(r.askedMs.max()).isAtMost(maestro.drivers.NearSideWaitSlices.SLICE_MS)
+        assertThat(r.upstreamCalls).isEqualTo(0)   // no failure, so no fallback
     }
 
     @Test

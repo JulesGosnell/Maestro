@@ -2,17 +2,23 @@ package maestro.drivers
 
 import com.google.common.truth.Truth.assertThat
 import device.IOSDevice
+import io.mockk.confirmVerified
 import io.mockk.every
+import io.mockk.excludeRecords
+import io.mockk.verify
 import io.mockk.mockk
 import maestro.OnDeviceElementQuery
 import maestro.nearside.NearSideSelector
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import maestro.utils.ScreenStatic
+import xcuitest.api.NearSideCapabilities
 import xcuitest.api.NearSideElement
 import xcuitest.api.NearSideFindResponse
 import xcuitest.api.NearSideWaitUntilRequest
 import xcuitest.api.NearSideWaitUntilResponse
+import xcuitest.api.ScreenStaticResponse
 import maestro.utils.network.XCUITestServerError
 
 /**
@@ -24,6 +30,7 @@ class NearSideWaitSlicesTest {
     @AfterEach
     fun restoreClock() {
         NearSideWaitSlices.clock = System::currentTimeMillis
+        System.clearProperty(ScreenStatic.STATIC_PROPERTY)
     }
 
     /**
@@ -55,12 +62,13 @@ class NearSideWaitSlicesTest {
         }
     }
 
-    private fun driverOver(runner: Runner): IOSDriver {
+    private fun deviceOver(runner: Runner): IOSDevice = mockk<IOSDevice>(relaxed = true) {
+        every { deviceId } returns "reid"
+        every { nearSideWaitUntil(any()) } answers { runner.waitUntil(firstArg()) }
+    }
+
+    private fun driverOver(runner: Runner, device: IOSDevice = deviceOver(runner)): IOSDriver {
         NearSideWaitSlices.clock = { runner.nowMs }
-        val device = mockk<IOSDevice>(relaxed = true) {
-            every { deviceId } returns "reid"
-            every { nearSideWaitUntil(any()) } answers { runner.waitUntil(firstArg()) }
-        }
         return IOSDriver(device)
     }
 
@@ -125,5 +133,51 @@ class NearSideWaitSlicesTest {
 
         assertThrows<XCUITestServerError.UnknownFailure> { waitFor(driverOver(runner), 300_000) }
         assertThat(runner.askedMs).hasSize(1)
+    }
+
+    // ---- loki on artha#5603: slicing re-asks ONLY the condition; no action is ever replayed ----
+
+    @Test
+    fun `a sliced waitUntil sends the device NOTHING but the same read-only condition check`() {
+        val runner = Runner(visibleAtMs = null)
+        val device = deviceOver(runner)
+        excludeRecords { device.deviceId }
+        val requests = mutableListOf<NearSideWaitUntilRequest>()
+        every { device.nearSideWaitUntil(capture(requests)) } answers { runner.waitUntil(firstArg()) }
+
+        waitFor(driverOver(runner, device), 300_000)
+
+        verify(exactly = 5) { device.nearSideWaitUntil(any()) }
+        confirmVerified(device)   // no tap, input, swipe, launch, erase … — nothing else at all
+        assertThat(requests.map { it.copy(timeoutMs = 0) }.distinct()).hasSize(1)   // the same question each slice
+        assertThat(requests.map { it.condition }.distinct()).containsExactly("visible")
+    }
+
+    @Test
+    fun `a sliced screen-static wait sends the device NOTHING but the read-only screenStatic check`() {
+        System.setProperty(ScreenStatic.STATIC_PROPERTY, "on")
+        var nowMs = 0L
+        NearSideWaitSlices.clock = { nowMs }
+        val asked = mutableListOf<Long>()
+        val device = mockk<IOSDevice>(relaxed = true) {
+            every { deviceId } returns "reid"
+            every { nearSideCapabilities() } returns NearSideCapabilities(nearSide = 1, ops = listOf("waitUntil"), screenStatic = 1)
+            every { screenStatic(any()) } answers {
+                val t = firstArg<Long>()
+                asked += t
+                if (t > 100_000) throw XCUITestServerError.UnknownFailure("Request for screenStatic failed, code: 500, body: ")
+                nowMs += minOf(t, 30_000L)   // the runner's own 30 s cap; never static
+                ScreenStaticResponse(isScreenStatic = false, attempts = 1, frames = 1)
+            }
+        }
+        excludeRecords { device.deviceId }
+
+        assertThat(IOSDriver(device).waitUntilScreenIsStatic(300_000)).isFalse()
+
+        assertThat(nowMs).isEqualTo(300_000)
+        assertThat(asked.max()).isAtMost(NearSideWaitSlices.SLICE_MS)
+        verify(exactly = 1) { device.nearSideCapabilities() }
+        verify(exactly = asked.size) { device.screenStatic(any()) }
+        confirmVerified(device)   // no isScreenStatic fallback, no action — only the check, re-asked
     }
 }

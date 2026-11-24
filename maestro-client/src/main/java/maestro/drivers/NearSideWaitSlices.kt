@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory
  * left of the caller's deadline. The last answer is returned either way: unmet at the deadline
  * is the caller's to name (Orchestra's ElementNotFound / a false condition), never a 500.
  * A real error from a slice is NOT retried: it propagates as before.
+ *
+ * Only a READ-ONLY check is ever sliced — the near-side waitUntil condition and POST
+ * /screenStatic (ScreenStatic.iosSettleStatic). Nothing that taps, types or otherwise acts on the
+ * device goes through here, so no action is ever sent twice (artha#5603).
  */
 object NearSideWaitSlices {
 
