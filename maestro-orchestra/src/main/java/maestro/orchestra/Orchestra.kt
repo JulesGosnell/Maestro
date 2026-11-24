@@ -1254,6 +1254,7 @@ class Orchestra(
                 appId = config?.appId,
                 tapRepeat = command.repeat,
                 waitToSettleTimeoutMs = command.waitToSettleTimeoutMs,
+                candidates = result.candidates,
             )
         }
 
@@ -1329,7 +1330,7 @@ class Orchestra(
                 else lookupTimeoutMs,
             )
 
-        val (description, filterFunc) = buildFilter(selector = selector)
+        val (description, filterFunc, candidatesFunc) = buildFilter(selector = selector)
         val debugMessage = """
             Element with $description not found. Check the UI hierarchy in debug artifacts to verify if the element exists.
             
@@ -1347,7 +1348,7 @@ class Orchestra(
                 timeout,
                 filterFunc,
                 parentViewHierarchy
-            ) ?: throw MaestroException.ElementNotFound(
+            )?.copy(candidates = candidatesFunc) ?: throw MaestroException.ElementNotFound(
                 "Element not found: $description",
                 parentViewHierarchy.root,
                 debugMessage = debugMessage
@@ -1366,7 +1367,7 @@ class Orchestra(
         return maestro.findElementWithTimeout(
             timeoutMs = timeout,
             filter = filterFunc
-        ) ?: throw MaestroException.ElementNotFound(
+        )?.copy(candidates = candidatesFunc) ?: throw MaestroException.ElementNotFound(
             "Element not found: $description",
             maestro.viewHierarchy().root,
             debugMessage = exceptionDebugMessage
@@ -1567,6 +1568,7 @@ class Orchestra(
         
         val allFilters = listOf(basicFilter) + relativeFilters
         var resultFilter = Filters.intersect(allFilters)
+        val candidatesFilter = resultFilter
 
         resultFilter = selector.index
             ?.toDouble()
@@ -1584,6 +1586,7 @@ class Orchestra(
         return FilterWithDescription(
             descriptions.joinToString(", "),
             resultFilter,
+            candidatesFilter,
         )
     }
 
