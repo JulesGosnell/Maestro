@@ -128,6 +128,7 @@ class XCRunnerCLIUtils(private val tempFileHandler: TempFileHandler = TempFileHa
         val outputFile = File(logDirectory, "xctest_runner_$date.log")
         val logOutputDir = tempFileHandler.createTempDirectory("maestro_xctestrunner_xcodebuild_output").toPath()
         val params = mutableMapOf("TEST_RUNNER_PORT" to port.toString())
+        params += xcuitest.IOSDriverTimeouts.runnerEnvironment("TEST_RUNNER_")
         if (snapshotKeyHonorModalViews != null) {
             params["TEST_RUNNER_snapshotKeyHonorModalViews"] = snapshotKeyHonorModalViews.toString()
         }

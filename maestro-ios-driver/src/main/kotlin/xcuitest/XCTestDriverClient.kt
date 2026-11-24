@@ -18,9 +18,10 @@ class XCTestDriverClient(
     private val installer: XCTestInstaller,
     private val okHttpClient: OkHttpClient = HttpClient.build(
         name = "XCTestDriverClient",
-        readTimeout = 200.seconds,
+        // smithr (artha#5603): above the runner's own limit, from MAESTRO_IOS_DRIVER_TIMEOUT_MS
+        readTimeout = IOSDriverTimeouts.client(),
         connectTimeout = 1.seconds,
-        callTimeout = 200.seconds
+        callTimeout = IOSDriverTimeouts.client()
     ),
     private val reinstallDriver: Boolean = true,
 ) {
