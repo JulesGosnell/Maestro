@@ -17,6 +17,11 @@ object ScreenshotUtils {
             return null
         }
 
+        // norn#486: the first failure keeps what was sampled before it (no device calls)
+        if (status == CommandStatus.FAILED) {
+            debugOutput.prestate = maestro.failurePrestate.snapshot()
+        }
+
         val result = kotlin.runCatching {
             val out = File
                 .createTempFile("screenshot-${System.currentTimeMillis()}", ".png")

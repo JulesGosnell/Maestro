@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import maestro.FailurePrestate
 import maestro.MaestroException
 import maestro.TreeNode
 import maestro.ai.cloud.Defect
@@ -112,6 +113,13 @@ object TestDebugReporter {
 
             it.screenshot.copyTo(file)
         }
+
+        // norn#486: next to screenshot-❌, named like it; only a failed flow has one
+        debugOutput.prestate?.writeTo(
+            dir = path.toFile(),
+            prefix = "prestate-$shardPrefix",
+            suffix = "-(${flowName})",
+        )
     }
 
     fun deleteOldFiles(days: Long = 14) {
@@ -231,6 +239,8 @@ data class FlowDebugOutput(
     val commands: IdentityHashMap<MaestroCommand, CommandDebugMetadata> = IdentityHashMap<MaestroCommand, CommandDebugMetadata>(),
     val screenshots: MutableList<Screenshot> = mutableListOf(),
     var exception: MaestroException? = null,
+    // norn#486: the pre-failure state, taken when the first command fails; null on success
+    var prestate: FailurePrestate.Snapshot? = null,
 ) {
     data class Screenshot(
         val screenshot: File,
