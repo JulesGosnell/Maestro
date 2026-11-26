@@ -62,6 +62,9 @@ class Maestro(
 
     private var screenRecordingInProgress = false
 
+    /** norn#486: the pre-failure state, kept from samples taken anyway; see [FailurePrestate]. */
+    val failurePrestate = FailurePrestate()
+
     fun launchApp(
         appId: String,
         launchArguments: Map<String, Any> = emptyMap(),
@@ -204,13 +207,13 @@ class Maestro(
                 ).bounds
         // smithr: on iOS the "refresh" above is usually against the lookup's own, pre-settle
         // read; aim at bounds two fresh reads agree on (TapStableBounds).
-        val center = (
+        val aimedBounds =
             if (cachedDeviceInfo.platform == Platform.IOS) {
                 TapStableBounds.await(element.treeNode, refreshedBounds, candidates) { viewHierarchy() }
             } else {
                 refreshedBounds
             }
-            ).center()
+        val center = aimedBounds.center()
         performTap(
             x = center.x,
             y = center.y,
@@ -218,7 +221,8 @@ class Maestro(
             longPress = longPress,
             initialHierarchy = hierarchyBeforeTap,
             tapRepeat = tapRepeat,
-            waitToSettleTimeoutMs = waitToSettleTimeoutMs
+            waitToSettleTimeoutMs = waitToSettleTimeoutMs,
+            aimedBounds = aimedBounds,
         )
 
         if (waitUntilVisible) {
@@ -294,14 +298,15 @@ class Maestro(
         longPress: Boolean = false,
         initialHierarchy: ViewHierarchy? = null,
         tapRepeat: TapRepeat? = null,
-        waitToSettleTimeoutMs: Int? = null
+        waitToSettleTimeoutMs: Int? = null,
+        aimedBounds: Bounds? = null,
     ) {
         val capabilities = driver.capabilities()
 
         if (Capability.FAST_HIERARCHY in capabilities) {
             hierarchyBasedTap(x, y, retryIfNoChange, longPress, initialHierarchy, tapRepeat, waitToSettleTimeoutMs)
         } else {
-            screenshotBasedTap(x, y, retryIfNoChange, longPress, initialHierarchy, tapRepeat, waitToSettleTimeoutMs)
+            screenshotBasedTap(x, y, retryIfNoChange, longPress, initialHierarchy, tapRepeat, waitToSettleTimeoutMs, aimedBounds)
         }
     }
 
@@ -348,7 +353,8 @@ class Maestro(
         longPress: Boolean = false,
         initialHierarchy: ViewHierarchy? = null,
         tapRepeat: TapRepeat? = null,
-        waitToSettleTimeoutMs: Int? = null
+        waitToSettleTimeoutMs: Int? = null,
+        aimedBounds: Bounds? = null,
     ) {
         LOGGER.info("Try tapping at ($x, $y) using hierarchy based logic for wait")
 
@@ -359,6 +365,8 @@ class Maestro(
         val screenshotBeforeTap: BufferedImage? =
             if (FastSettle.skipBeforeTapScreenshot(retries)) null
             else ScreenshotUtils.tryTakingScreenshot(driver)
+        // norn#486: kept, not retaken, in case this flow fails
+        screenshotBeforeTap?.let { failurePrestate.onPreTapScreenshot(it, Point(x, y), aimedBounds) }
 
         repeat(retries) {
             if (longPress) {
@@ -478,7 +486,7 @@ class Maestro(
         var lastMiss: XCUITestServerError.TransientIssue? = null
         val element = MaestroTimer.withTimeout(hierarchyTimeoutMs) {
             hierarchy = viewHierarchy ?: try {
-                viewHierarchy().also { lastMiss = null }
+                viewHierarchy().also { lastMiss = null; failurePrestate.onSearchRead(it) }
             } catch (miss: XCUITestServerError.TransientIssue) {
                 lastMiss = miss
                 return@withTimeout null
