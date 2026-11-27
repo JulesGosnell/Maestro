@@ -172,6 +172,7 @@ class Orchestra(
         onFlowStart(commands)
 
         maestro.settleStats.reset()
+        maestro.failurePrestate.clear()
 
         executeDefineVariablesCommands(commands, config)
         // filter out DefineVariablesCommand to not execute it twice
@@ -213,6 +214,8 @@ class Orchestra(
 
             // smithr#1246: one stdout line per flow (maestro.log capture is not reliable in CI)
             maestro.settleStats.emitFlowSummary(config?.name)
+            // norn#486: a failure has already taken its snapshot (onCommandFailed); keep nothing
+            maestro.failurePrestate.clear()
 
             exception?.let { throw it }
 
@@ -328,9 +331,18 @@ class Orchestra(
         // smithr#1246: one SETTLE-STATS line per command (settle / find / other); measure only.
         val type = maestroCommand.asCommand()?.let { it::class.simpleName } ?: "Unknown"
         val handle = maestro.settleStats.beginCommand(type)
+        // norn#486: what the samples kept for a failure served; a scroll or assert's first
+        // search read is its start state
+        val command = maestroCommand.asCommand()
+        val prestate = maestro.failurePrestate.beginCommand(
+            command = command?.description(),
+            selector = maestroCommand.elementSelector()?.description(),
+            search = command is ScrollUntilVisibleCommand || command is AssertConditionCommand || command is AssertCommand,
+        )
         try {
             return executeCommandUnmeasured(maestroCommand, config)
         } finally {
+            maestro.failurePrestate.endCommand(prestate)
             maestro.settleStats.endCommand(handle)
         }
     }
